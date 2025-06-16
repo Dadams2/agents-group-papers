@@ -76,6 +76,7 @@ class Auth {
 
     login() {
         const redirectUri = window.location.href;
+        console.log('Redirect URI:', redirectUri);
 
         if (redirectUri.includes('localhost') || redirectUri.includes('127.0.0.1')) {
             // Set dummy user for local hosting
@@ -93,6 +94,7 @@ class Auth {
         } else {
             // Redirect to GitHub OAuth using Implicit Grant Flow
             const authUrl = `https://github.com/login/oauth/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}&response_type=token`;
+            console.log('Authorization URL:', authUrl);
             window.location.href = authUrl;
         }
     }
