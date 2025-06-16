@@ -222,13 +222,5 @@ const fetchFileContent = async (path) => {
     return await response.text();
 };
 
-const blockFrontendUntilAuthenticated = () => {
-    if (!isAuthenticated()) {
-        document.body.innerHTML = '<div class="auth-blocker">Please log in to access the site.</div>';
-        console.log('Frontend blocked until user logs in');
-    }
-};
-
 setupEventListeners();
 main();
-blockFrontendUntilAuthenticated();
