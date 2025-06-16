@@ -223,7 +223,20 @@ class API {
     }
 
     generatePaperUrl(track, filename) {
-        return `/papers/${track}/${filename}`;
+        const { hostname, pathname } = window.location;
+
+        // If running locally, use relative path
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return `/papers/${track}/${filename}`;
+        }
+
+        // Otherwise, assume GitHub Pages and construct GitHub URL
+        const githubUser = hostname.split('.')[0];
+        const pathParts = pathname.split('/').filter(Boolean);
+        const repoName = pathParts[0];
+        const branch = 'main'; // change to 'master' if needed
+
+        return `https://github.com/${githubUser}/${repoName}/blob/${branch}/papers/${track}/${filename}`;
     }
 }
 
