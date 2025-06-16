@@ -25,6 +25,7 @@ A simple, GitHub Pages-hosted web application for managing research paper readin
 - JSON files for schedule and configuration data
 - GitHub Actions workflows for automation
 - GitHub Pages for free hosting
+- Github Actions for authentication see [this example repo](https://github.com/austenstone/github-actions-oauth) for more details
 
 ### File Structure
 ```

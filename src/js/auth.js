@@ -166,7 +166,7 @@ const setupEventListeners = () => {
     const logoutBtn = document.getElementById('logout-btn');
 
     loginBtn?.addEventListener('click', () => {
-        const clientId = 'Iv1.bc38b148a74116b3'; // Replace with your actual client ID
+        const clientId = 'Ov23liqY2bUCkabZtdJu'; 
         const redirectUri = window.location.href;
         const authUrl = `https://github.com/login/oauth/authorize?scope=user:email&client_id=${clientId}&redirect_uri=${redirectUri}`;
         window.location.href = authUrl;
