@@ -37,30 +37,57 @@ class Auth {
         logoutBtn?.addEventListener('click', () => this.logout());
     }
 
+    async handleCallback(code) {
+        try {
+            // Exchange code for token using GitHub's OAuth API
+            const response = await fetch(`https://github.com/login/oauth/access_token?client_id=${this.clientId}&code=${code}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to exchange code for token');
+            }
+
+            const data = await response.json();
+            const token = data.access_token;
+
+            if (!token) {
+                throw new Error('No access token received');
+            }
+
+            // Fetch user details using the token
+            const userResponse = await fetch('https://api.github.com/user', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!userResponse.ok) {
+                throw new Error('Failed to fetch user details');
+            }
+
+            const user = await userResponse.json();
+
+            // Store token and user details
+            localStorage.setItem('github_token', token);
+            localStorage.setItem('github_user', JSON.stringify(user));
+
+            this.user = user;
+            this.updateUI();
+        } catch (error) {
+            console.error('Error during OAuth callback:', error);
+            alert('Authentication failed. Please try again.');
+        }
+    }
+
     login() {
-        // For demo purposes, we'll simulate GitHub login
-        // In production, this would redirect to GitHub OAuth
-        const demoUser = {
-            login: 'demo-user',
-            name: 'Demo User',
-            avatar_url: 'https://github.com/github.png',
-            id: 12345
-        };
-        
-        this.user = demoUser;
-        localStorage.setItem('github_token', 'demo-token');
-        localStorage.setItem('github_user', JSON.stringify(demoUser));
-        this.updateUI();
-        
-        // Remove any auth-required messages
-        document.querySelectorAll('.auth-required').forEach(el => {
-            el.classList.add('hidden');
-        });
-        
-        // Show auth-protected content
-        document.querySelectorAll('.hidden[id$="-form"]').forEach(el => {
-            el.classList.remove('hidden');
-        });
+        // Redirect to GitHub OAuth
+        const redirectUri = window.location.origin;
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}`;
+        window.location.href = authUrl;
     }
 
     logout() {
@@ -114,13 +141,6 @@ class Auth {
                 el.classList.add('hidden');
             });
         }
-    }
-
-    async handleCallback(code) {
-        // In production, exchange code for token
-        console.log('OAuth callback with code:', code);
-        // For now, simulate successful auth
-        this.login();
     }
 
     isAuthenticated() {
