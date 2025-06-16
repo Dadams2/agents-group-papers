@@ -1,0 +1,28 @@
+{
+  "tracks": {
+    "discussion": {
+      "name": "Discussion Papers",
+      "description": "Papers scheduled for group discussion",
+      "color": "#3b82f6",
+      "icon": "💬"
+    },
+    "reference": {
+      "name": "Reference Papers", 
+      "description": "Background and reference materials",
+      "color": "#10b981",
+      "icon": "📚"
+    },
+    "archived": {
+      "name": "Archived Papers",
+      "description": "Previously discussed papers",
+      "color": "#6b7280",
+      "icon": "📁"
+    }
+  },
+  "settings": {
+    "groupName": "AI Agents Research Group",
+    "meetingDay": "Friday",
+    "meetingTime": "2:00 PM",
+    "timezone": "EST"
+  }
+}
