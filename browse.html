@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Papers - AI Agents Research Group</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1><i class="fas fa-brain"></i> AI Agents Research Group</h1>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="upload.html" class="nav-link">Upload Paper</a>
+                <a href="browse.html" class="nav-link active">Browse Papers</a>
+                <a href="schedule.html" class="nav-link">Schedule</a>
+                <div id="auth-section">
+                    <button id="login-btn" class="btn btn-primary">
+                        <i class="fab fa-github"></i> Login with GitHub
+                    </button>
+                    <div id="user-info" class="user-info hidden">
+                        <img id="user-avatar" class="user-avatar" alt="User Avatar">
+                        <span id="user-name"></span>
+                        <button id="logout-btn" class="btn btn-secondary">Logout</button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="browse-section">
+                <h2><i class="fas fa-search"></i> Browse Papers</h2>
+                
+                <div class="browse-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Search papers by title, author, or description...">
+                    </div>
+                    
+                    <div class="filter-controls">
+                        <select id="track-filter">
+                            <option value="">All Tracks</option>
+                            <option value="discussion">💬 Discussion Papers</option>
+                            <option value="reference">📚 Reference Papers</option>
+                            <option value="archived">📁 Archived Papers</option>
+                        </select>
+                        
+                        <select id="sort-options">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="title-asc">Title A-Z</option>
+                            <option value="title-desc">Title Z-A</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="track-tabs">
+                    <button class="track-tab active" data-track="">All Papers</button>
+                    <button class="track-tab" data-track="discussion">💬 Discussion</button>
+                    <button class="track-tab" data-track="reference">📚 Reference</button>
+                    <button class="track-tab" data-track="archived">📁 Archived</button>
+                </div>
+
+                <div id="papers-container" class="papers-container">
+                    <div class="loading">Loading papers...</div>
+                </div>
+
+                <div id="no-papers" class="no-papers hidden">
+                    <i class="fas fa-file-pdf"></i>
+                    <h3>No Papers Found</h3>
+                    <p>No papers match your current filters.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AI Agents Research Group. Powered by GitHub Pages.</p>
+        </div>
+    </footer>
+
+    <script src="src/js/auth.js"></script>
+    <script src="src/js/api.js"></script>
+    <script src="src/js/browse.js"></script>
+</body>
+</html>

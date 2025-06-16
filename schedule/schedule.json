@@ -1,0 +1,70 @@
+{
+  "schedule": [
+    {
+      "id": "2025-06-20",
+      "date": "2025-06-20",
+      "title": "Attention Is All You Need",
+      "authors": "Vaswani et al.",
+      "track": "discussion",
+      "presenter": "TBD",
+      "filename": "attention_is_all_you_need.pdf",
+      "status": "upcoming",
+      "description": "Foundational paper on the Transformer architecture that revolutionized NLP",
+      "uploadedBy": "demo-user",
+      "uploadedAt": "2025-06-13T10:00:00Z"
+    },
+    {
+      "id": "2025-06-27",
+      "date": "2025-06-27",
+      "title": "GPT-4 Technical Report",
+      "authors": "OpenAI",
+      "track": "discussion",
+      "presenter": "TBD",
+      "filename": "gpt4_technical_report.pdf",
+      "status": "upcoming",
+      "description": "Technical details of GPT-4 architecture and capabilities",
+      "uploadedBy": "demo-user",
+      "uploadedAt": "2025-06-13T11:00:00Z"
+    },
+    {
+      "id": "2025-07-04",
+      "date": "2025-07-04",
+      "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+      "authors": "Wei et al.",
+      "track": "discussion",
+      "presenter": "TBD",
+      "filename": "chain_of_thought.pdf",
+      "status": "upcoming",
+      "description": "Explores how to improve reasoning capabilities in LLMs through prompting",
+      "uploadedBy": "demo-user",
+      "uploadedAt": "2025-06-13T12:00:00Z"
+    },
+    {
+      "id": "ref-neural-networks",
+      "date": "2025-06-13",
+      "title": "Deep Learning",
+      "authors": "Goodfellow, Bengio, and Courville",
+      "track": "reference",
+      "presenter": "",
+      "filename": "neural_networks_intro.pdf",
+      "status": "reference",
+      "description": "Comprehensive introduction to deep learning and neural networks",
+      "uploadedBy": "demo-user",
+      "uploadedAt": "2025-06-13T09:00:00Z"
+    },
+    {
+      "id": "arch-bert",
+      "date": "2025-05-30",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "authors": "Devlin et al.",
+      "track": "archived",
+      "presenter": "Dr. Smith",
+      "filename": "bert_paper.pdf",
+      "status": "completed",
+      "description": "Bidirectional encoder representations from transformers",
+      "uploadedBy": "demo-user",
+      "uploadedAt": "2025-05-25T14:00:00Z"
+    }
+  ],
+  "lastUpdated": "2025-06-13"
+}
