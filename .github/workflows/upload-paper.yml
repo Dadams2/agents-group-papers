@@ -1,0 +1,97 @@
+name: Upload Paper
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: 'Paper title'
+        required: true
+        type: string
+      authors:
+        description: 'Paper authors'
+        required: true
+        type: string
+      track:
+        description: 'Paper track'
+        required: true
+        type: choice
+        options:
+        - discussion
+        - reference
+      description:
+        description: 'Paper description'
+        required: false
+        type: string
+      discussion_date:
+        description: 'Discussion date (YYYY-MM-DD)'
+        required: false
+        type: string
+      presenter:
+        description: 'Presenter name'
+        required: false
+        type: string
+      file_content:
+        description: 'Base64 encoded PDF content'
+        required: true
+        type: string
+      filename:
+        description: 'PDF filename'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  upload-paper:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Decode and save PDF
+      run: |
+        echo "${{ github.event.inputs.file_content }}" | base64 -d > "papers/${{ github.event.inputs.track }}/${{ github.event.inputs.filename }}"
+        
+    - name: Update schedule
+      run: |
+        python3 << 'EOF'
+        import json
+        import os
+        from datetime import datetime
+        
+        # Load current schedule
+        with open('schedule/schedule.json', 'r') as f:
+            schedule_data = json.load(f)
+        
+        # Create new paper entry
+        new_paper = {
+            "id": str(int(datetime.now().timestamp())),
+            "date": "${{ github.event.inputs.discussion_date }}" or datetime.now().strftime('%Y-%m-%d'),
+            "title": "${{ github.event.inputs.title }}",
+            "authors": "${{ github.event.inputs.authors }}",
+            "track": "${{ github.event.inputs.track }}",
+            "presenter": "${{ github.event.inputs.presenter }}" or "TBD",
+            "filename": "${{ github.event.inputs.filename }}",
+            "status": "upcoming" if "${{ github.event.inputs.track }}" == "discussion" else "reference",
+            "description": "${{ github.event.inputs.description }}",
+            "uploadedBy": "${{ github.actor }}",
+            "uploadedAt": datetime.now().isoformat()
+        }
+        
+        # Add to schedule
+        schedule_data['schedule'].append(new_paper)
+        schedule_data['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # Save updated schedule
+        with open('schedule/schedule.json', 'w') as f:
+            json.dump(schedule_data, f, indent=2)
+        EOF
+        
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Add paper: ${{ github.event.inputs.title }}" || exit 0
+        git push

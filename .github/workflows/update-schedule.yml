@@ -1,0 +1,96 @@
+name: Update Schedule
+
+on:
+  workflow_dispatch:
+    inputs:
+      paper_id:
+        description: 'Paper ID to schedule'
+        required: true
+        type: string
+      discussion_date:
+        description: 'Discussion date (YYYY-MM-DD)'
+        required: true
+        type: string
+      presenter:
+        description: 'Presenter name'
+        required: false
+        type: string
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+        - add_to_schedule
+        - update_presenter
+        - move_to_archive
+
+permissions:
+  contents: write
+
+jobs:
+  update-schedule:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Update schedule
+      run: |
+        python3 << 'EOF'
+        import json
+        import os
+        from datetime import datetime
+        
+        # Load current schedule
+        with open('schedule/schedule.json', 'r') as f:
+            schedule_data = json.load(f)
+        
+        paper_id = "${{ github.event.inputs.paper_id }}"
+        action = "${{ github.event.inputs.action }}"
+        
+        # Find the paper
+        paper_index = None
+        for i, paper in enumerate(schedule_data['schedule']):
+            if paper['id'] == paper_id:
+                paper_index = i
+                break
+        
+        if paper_index is None:
+            print(f"Paper with ID {paper_id} not found")
+            exit(1)
+        
+        paper = schedule_data['schedule'][paper_index]
+        
+        if action == "add_to_schedule":
+            paper['date'] = "${{ github.event.inputs.discussion_date }}"
+            paper['presenter'] = "${{ github.event.inputs.presenter }}" or "TBD"
+            paper['track'] = "discussion"
+            paper['status'] = "upcoming"
+            
+        elif action == "update_presenter":
+            paper['presenter'] = "${{ github.event.inputs.presenter }}" or "TBD"
+            
+        elif action == "move_to_archive":
+            paper['track'] = "archived"
+            paper['status'] = "completed"
+            # Move the actual file
+            import shutil
+            old_path = f"papers/{paper.get('track', 'discussion')}/{paper['filename']}"
+            new_path = f"papers/archived/{paper['filename']}"
+            if os.path.exists(old_path):
+                shutil.move(old_path, new_path)
+        
+        schedule_data['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # Save updated schedule
+        with open('schedule/schedule.json', 'w') as f:
+            json.dump(schedule_data, f, indent=2)
+        EOF
+        
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action Bot"
+        git add .
+        git commit -m "Update schedule: ${{ github.event.inputs.action }} for paper ${{ github.event.inputs.paper_id }}" || exit 0
+        git push
