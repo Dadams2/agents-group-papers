@@ -134,9 +134,6 @@ class API {
 
     // Upload paper (simulated)
     async uploadPaper(paperData, file) {
-        if (!window.auth.isAuthenticated()) {
-            throw new Error('Authentication required');
-        }
 
         // Simulate upload delay
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -160,7 +157,6 @@ class API {
             filename: file.name,
             status: paperData.track === 'discussion' ? 'upcoming' : 'reference',
             description: paperData.description || '',
-            uploadedBy: window.auth.getUser().login,
             uploadedAt: new Date().toISOString()
         };
 
@@ -174,9 +170,6 @@ class API {
 
     // Add to schedule
     async addToSchedule(paperId, date, presenter) {
-        if (!window.auth.isAuthenticated()) {
-            throw new Error('Authentication required');
-        }
 
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));

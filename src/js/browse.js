@@ -175,7 +175,7 @@ function createPaperCard(paper) {
                     <i class="fas fa-download"></i> Download PDF
                 </a>
                 
-                ${paper.track === 'reference' && window.auth.isAuthenticated() ? 
+                ${paper.track === 'reference' ? 
                     `<button onclick="addToDiscussion('${paper.id}')" class="btn btn-success">
                         <i class="fas fa-calendar-plus"></i> Schedule Discussion
                     </button>` : ''}
@@ -184,7 +184,7 @@ function createPaperCard(paper) {
                     <i class="fas fa-share"></i> Share
                 </button>
                 
-                ${window.auth.isAuthenticated() && canEditPaper(paper) ? 
+                ${canEditPaper(paper) ? 
                     `<button onclick="editPaper('${paper.id}')" class="btn btn-secondary">
                         <i class="fas fa-edit"></i> Edit
                     </button>` : ''}
@@ -214,8 +214,7 @@ function getTrackName(track) {
 }
 
 function canEditPaper(paper) {
-    const user = window.auth.getUser();
-    return user && (paper.uploadedBy === user.login || user.isAdmin);
+    return true;
 }
 
 function escapeHtml(text) {
@@ -226,11 +225,6 @@ function escapeHtml(text) {
 
 // Action handlers
 async function addToDiscussion(paperId) {
-    if (!window.auth.isAuthenticated()) {
-        alert('Please log in to schedule discussions');
-        return;
-    }
-
     const paper = currentPapers.find(p => p.id === paperId);
     if (!paper) return;
 
