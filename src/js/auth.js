@@ -85,7 +85,7 @@ class Auth {
 
     login() {
         // Redirect to GitHub OAuth
-        const redirectUri = window.location.origin;
+        const redirectUri = window.location.href;
         const authUrl = `https://github.com/login/oauth/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}`;
         window.location.href = authUrl;
     }
