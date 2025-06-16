@@ -173,12 +173,6 @@ function renderScheduleList() {
                             <i class="fas fa-download"></i> Download
                         </a>
                         
-                        ${window.auth.isAuthenticated() ? `
-                            <button onclick="editScheduleItem('${item.id}')" class="btn btn-secondary">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                        ` : ''}
-                        
                         <button onclick="exportToCalendar('${item.id}')" class="btn btn-secondary">
                             <i class="fas fa-calendar-plus"></i> Add to Calendar
                         </button>
@@ -278,11 +272,6 @@ function createCalendarDay(date, currentMonth) {
 }
 
 async function openAddModal() {
-    if (!window.auth.isAuthenticated()) {
-        alert('Please log in to add items to the schedule');
-        return;
-    }
-
     const modal = document.getElementById('add-schedule-modal');
     const paperSelect = document.getElementById('schedule-paper');
     
@@ -336,16 +325,6 @@ function showEventDetails(event) {
         ${event.description ? `\nDescription: ${event.description}` : ''}
     `;
     alert(details);
-}
-
-function editScheduleItem(itemId) {
-    if (!window.auth.isAuthenticated()) {
-        alert('Please log in to edit schedule items');
-        return;
-    }
-    
-    // This would open an edit modal
-    alert('Edit functionality coming soon!');
 }
 
 function exportToCalendar(itemId) {

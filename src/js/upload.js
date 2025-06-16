@@ -79,11 +79,6 @@ function setupFileUpload() {
 async function handleUpload(e) {
     e.preventDefault();
     
-    if (!window.auth.isAuthenticated()) {
-        showError('Please log in to upload papers');
-        return;
-    }
-
     const form = e.target;
     const formData = new FormData(form);
     const fileInput = document.getElementById('paper-file');
