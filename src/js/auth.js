@@ -1,7 +1,7 @@
 // GitHub OAuth and Authentication
 class Auth {
     constructor() {
-        this.clientId = 'YOUR_GITHUB_CLIENT_ID'; // Replace with actual client ID
+        this.clientId = 'Ov23liqY2bUCkabZtdJu'; // Replace with actual client ID
         this.user = null;
         this.init();
     }
