@@ -11,14 +11,16 @@ class API {
         if (this.scheduleCache) return this.scheduleCache;
 
         try {
-            const baseUrl = window.location.origin;
+            const href = window.location.href;
             let response;
 
-            if (baseUrl.includes('localhost')) {
+            if (href.includes('localhost')) {
                 // Fetch files natively when hosting locally
                 response = await fetch('/schedule/schedule.json');
             } else {
-                const [owner, repo] = baseUrl.split('/').slice(-2);
+                const urlParts = href.split('/');
+                const owner = urlParts[2].split('.')[0];
+                const repo = urlParts[3];
                 response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/schedule/schedule.json`);
             }
 
@@ -51,14 +53,16 @@ class API {
         if (this.tracksCache) return this.tracksCache;
 
         try {
-            const baseUrl = window.location.origin;
+            const href = window.location.href;
             let response;
 
-            if (baseUrl.includes('localhost')) {
+            if (href.includes('localhost')) {
                 // Fetch files natively when hosting locally
                 response = await fetch('/tracks/config.json');
             } else {
-                const [owner, repo] = baseUrl.split('/').slice(-2);
+                const urlParts = href.split('/');
+                const owner = urlParts[2].split('.')[0];
+                const repo = urlParts[3];
                 response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/tracks/config.json`);
             }
 
