@@ -9,9 +9,19 @@ class API {
     // Schedule operations
     async getSchedule() {
         if (this.scheduleCache) return this.scheduleCache;
-        
+
         try {
-            const response = await fetch('/schedule/schedule.json');
+            const baseUrl = window.location.origin;
+            let response;
+
+            if (baseUrl.includes('localhost')) {
+                // Fetch files natively when hosting locally
+                response = await fetch('/schedule/schedule.json');
+            } else {
+                const [owner, repo] = baseUrl.split('/').slice(-2);
+                response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/schedule/schedule.json`);
+            }
+
             if (!response.ok) throw new Error('Failed to fetch schedule');
             this.scheduleCache = await response.json();
             return this.scheduleCache;
@@ -39,9 +49,19 @@ class API {
 
     async getTracks() {
         if (this.tracksCache) return this.tracksCache;
-        
+
         try {
-            const response = await fetch('/tracks/config.json');
+            const baseUrl = window.location.origin;
+            let response;
+
+            if (baseUrl.includes('localhost')) {
+                // Fetch files natively when hosting locally
+                response = await fetch('/tracks/config.json');
+            } else {
+                const [owner, repo] = baseUrl.split('/').slice(-2);
+                response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/tracks/config.json`);
+            }
+
             if (!response.ok) throw new Error('Failed to fetch tracks');
             this.tracksCache = await response.json();
             return this.tracksCache;
