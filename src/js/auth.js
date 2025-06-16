@@ -10,17 +10,18 @@ class Auth {
         // Check for existing auth
         const token = localStorage.getItem('github_token');
         const user = localStorage.getItem('github_user');
-        
+
         if (token && user) {
             this.user = JSON.parse(user);
             this.updateUI();
         }
 
         // Handle OAuth callback
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        if (code) {
-            this.handleCallback(code);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const tokenFromHash = hashParams.get('access_token');
+        if (tokenFromHash) {
+            localStorage.setItem('github_token', tokenFromHash);
+            this.fetchUserDetails(tokenFromHash);
         }
 
         this.setupEventListeners();
@@ -37,28 +38,8 @@ class Auth {
         logoutBtn?.addEventListener('click', () => this.logout());
     }
 
-    async handleCallback(code) {
+    async fetchUserDetails(token) {
         try {
-            // Exchange code for token using GitHub's OAuth API
-            const response = await fetch(`https://github.com/login/oauth/access_token?client_id=${this.clientId}&code=${code}`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to exchange code for token');
-            }
-
-            const data = await response.json();
-            const token = data.access_token;
-
-            if (!token) {
-                throw new Error('No access token received');
-            }
-
-            // Fetch user details using the token
             const userResponse = await fetch('https://api.github.com/user', {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -70,23 +51,19 @@ class Auth {
             }
 
             const user = await userResponse.json();
-
-            // Store token and user details
-            localStorage.setItem('github_token', token);
             localStorage.setItem('github_user', JSON.stringify(user));
-
             this.user = user;
             this.updateUI();
         } catch (error) {
-            console.error('Error during OAuth callback:', error);
+            console.error('Error fetching user details:', error);
             alert('Authentication failed. Please try again.');
         }
     }
 
     login() {
-        // Redirect to GitHub OAuth
+        // Redirect to GitHub OAuth using Implicit Grant Flow
         const redirectUri = window.location.href;
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}`;
+        const authUrl = `https://github.com/login/oauth/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}&response_type=token`;
         window.location.href = authUrl;
     }
 
