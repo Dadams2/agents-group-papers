@@ -1,0 +1,37 @@
+name: AI Agents Research Group
+description: A collaborative platform for managing research paper reading groups
+url: https://yourusername.github.io/agents-group-papers
+baseurl: /agents-group-papers
+
+# GitHub Pages settings
+repository: yourusername/agents-group-papers
+github_username: yourusername
+
+# Site settings
+title: AI Agents Research Group
+email: your-email@example.com
+twitter_username: yourusername
+github_username: yourusername
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+
+# Exclude files from build
+exclude:
+  - package.json
+  - README.md
+  - .github/
+  - .gitignore
+  - LICENSE
+
+# Include important files
+include:
+  - _headers
+  - _redirects
+
+# Plugin settings
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap

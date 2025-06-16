@@ -1,0 +1,33 @@
+{
+  "name": "agents-group-papers",
+  "version": "1.0.0",
+  "description": "A GitHub Pages-hosted system for managing research paper reading groups",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000",
+    "test": "echo \"No tests yet\" && exit 0",
+    "lint": "echo \"No linting configured\" && exit 0",
+    "build": "echo \"Static site - no build required\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/agents-group-papers.git"
+  },
+  "keywords": [
+    "research",
+    "papers",
+    "reading-group",
+    "github-pages",
+    "academic",
+    "collaboration"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/agents-group-papers/issues"
+  },
+  "homepage": "https://yourusername.github.io/agents-group-papers/",
+  "devDependencies": {},
+  "dependencies": {}
+}
