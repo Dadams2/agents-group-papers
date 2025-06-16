@@ -1,7 +1,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 const BASEURL = 'https://api.github.com';
-const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFKQTM0VVEwRXQ4TWM2RDF1Mm15X1dnOVlneExrTERWcGZnNkZqYURhcDg5dXRmSVZBUFN6WlJwWnF0TTRReUNWQkpSSjVIMzdnMjlBRGh0';
+const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFKQTM0VVEwQUtrNXI4RkpGWFVpX2JzOEpUTTVXbGVDNU9adFNETEJtWEdlVXVxV05PVWJtdERNc3NkdmJGOEtFQlVPT1o0RHVMWFNBNm0y';
 const TOKEN = atob(TOKEN_BASE64);
 const OWNER = 'dadams2';
 const REPO = 'agents-group-papers';
