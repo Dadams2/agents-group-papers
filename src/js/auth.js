@@ -162,17 +162,21 @@ const isAuthenticated = () => {
 };
 
 const setupEventListeners = () => {
-    const loginBtns = document.querySelectorAll('#login-btn, #login-prompt');
+    const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
 
-    loginBtns.forEach(btn => {
-        btn?.addEventListener('click', () => {
-            console.log('Login button clicked');
-        });
+    loginBtn?.addEventListener('click', () => {
+        const clientId = 'Iv1.bc38b148a74116b3'; // Replace with your actual client ID
+        const redirectUri = window.location.href;
+        const authUrl = `https://github.com/login/oauth/authorize?scope=user:email&client_id=${clientId}&redirect_uri=${redirectUri}`;
+        window.location.href = authUrl;
     });
 
     logoutBtn?.addEventListener('click', () => {
-        console.log('Logout button clicked');
+        localStorage.removeItem('github_token');
+        localStorage.removeItem('github_user');
+        updateUI(null);
+        console.log('User logged out');
     });
 };
 
@@ -202,5 +206,29 @@ const main = async () => {
     }
 };
 
+const fetchFileContent = async (path) => {
+    const response = await fetch(`${BASEURL}/repos/${OWNER}/${REPO}/contents/${path}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${TOKEN}`,
+            Accept: 'application/vnd.github.v3.raw'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch file content: ${response.statusText}`);
+    }
+
+    return await response.text();
+};
+
+const blockFrontendUntilAuthenticated = () => {
+    if (!isAuthenticated()) {
+        document.body.innerHTML = '<div class="auth-blocker">Please log in to access the site.</div>';
+        console.log('Frontend blocked until user logs in');
+    }
+};
+
 setupEventListeners();
 main();
+blockFrontendUntilAuthenticated();
