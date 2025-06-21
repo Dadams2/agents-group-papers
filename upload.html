@@ -144,9 +144,25 @@
             userInfo.classList.add("hidden");
         }
 
+        // Update the UI based on authentication state
+        const authRequired = document.getElementById("auth-required");
+        const uploadForm = document.getElementById("upload-form");
+
+        if (auth.isAuthenticated()) {
+            authRequired.classList.add("hidden");
+            uploadForm.classList.remove("hidden");
+        } else {
+            authRequired.classList.remove("hidden");
+            uploadForm.classList.add("hidden");
+        }
+
         // Attach event listeners for login and logout
         loginBtn.addEventListener("click", () => auth.login());
         document.getElementById("logout-btn").addEventListener("click", () => auth.logout());
+
+        // Attach event listener for the login-prompt button
+        const loginPrompt = document.getElementById("login-prompt");
+        loginPrompt.addEventListener("click", () => auth.login());
     </script>
 </body>
 </html>
