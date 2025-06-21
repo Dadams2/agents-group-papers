@@ -129,6 +129,7 @@
         // Expose login and logout functions globally
         window.login = auth.login;
         window.logout = auth.logout;
+        window.auth = auth;
 
         // Update the auth-section dynamically based on authentication state
         const authSection = document.getElementById("auth-section");
