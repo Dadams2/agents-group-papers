@@ -1,13 +1,11 @@
-import * as auth from "../../auth/api.js";
-
 const updateUI = () => {
     const loginBtn = document.getElementById("login-btn");
     const userInfo = document.getElementById("user-info");
     const userAvatar = document.getElementById("user-avatar");
     const userName = document.getElementById("user-name");
 
-    if (auth.isAuthenticated()) {
-        const user = auth.currentUser();
+    if (isAuthenticated()) {
+        const user = currentUser();
         userAvatar.src = user.picture;
         userName.textContent = user.nickname;
         loginBtn.classList.add("hidden");
