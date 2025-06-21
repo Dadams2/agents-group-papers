@@ -8,6 +8,7 @@ const OWNER = 'dadams2';
 const REPO = 'agents-group-papers';
 const WORKFLOW_ID = 'login.yml';
 const LOGIN_HEADERS = {
+    Accept: "application/vnd.github+json",
     Authorization: `Bearer ${TOKEN}`
 };
 const JOB_NAME = 'login';
