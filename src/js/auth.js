@@ -1,6 +1,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');
 const BASEURL = 'https://api.github.com';
+// This seems dangerous, but it's a fine grained token on a private repo so not as bad as you think.
 const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFKQTM0VVEwQUtrNXI4RkpGWFVpX2JzOEpUTTVXbGVDNU9adFNETEJtWEdlVXVxV05PVWJtdERNc3NkdmJGOEtFQlVPT1o0RHVMWFNBNm0y';
 const TOKEN = atob(TOKEN_BASE64);
 const OWNER = 'dadams2';

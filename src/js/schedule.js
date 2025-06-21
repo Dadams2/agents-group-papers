@@ -67,6 +67,11 @@ function setupCalendarNavigation() {
 }
 
 async function loadSchedule() {
+    if (!window.auth.isAuthenticated()) {
+        console.warn('User is not logged in. Schedule will not be loaded.');
+        return;
+    }
+
     try {
         const scheduleData = await window.api.getSchedule();
         currentSchedule = scheduleData.schedule || [];
