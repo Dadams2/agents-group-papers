@@ -119,5 +119,34 @@
     <script src="src/js/auth.js"></script>
     <script src="src/js/api.js"></script>
     <script src="src/js/upload.js"></script>
+    <script type="module">
+        import * as auth from "./auth/api.js";
+
+        // Expose login and logout functions globally
+        window.login = auth.login;
+        window.logout = auth.logout;
+
+        // Update the auth-section dynamically based on authentication state
+        const authSection = document.getElementById("auth-section");
+        const loginBtn = document.getElementById("login-btn");
+        const userInfo = document.getElementById("user-info");
+        const userAvatar = document.getElementById("user-avatar");
+        const userName = document.getElementById("user-name");
+
+        if (auth.isAuthenticated()) {
+            const user = auth.currentUser();
+            userAvatar.src = user.picture;
+            userName.textContent = user.nickname;
+            loginBtn.classList.add("hidden");
+            userInfo.classList.remove("hidden");
+        } else {
+            loginBtn.classList.remove("hidden");
+            userInfo.classList.add("hidden");
+        }
+
+        // Attach event listeners for login and logout
+        loginBtn.addEventListener("click", () => auth.login());
+        document.getElementById("logout-btn").addEventListener("click", () => auth.logout());
+    </script>
 </body>
 </html>
