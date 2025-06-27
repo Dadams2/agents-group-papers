@@ -77,6 +77,19 @@
       "description": "original goal recognition as planning paper",
       "uploadedBy": "Dadams2",
       "uploadedAt": "2025-06-27T06:35:09.544099"
+    },
+    {
+      "id": "1751008873",
+      "date": "2025-07-04",
+      "title": "Large Language Models Still Can\u2019t Plan",
+      "authors": "Karthik Valmeekam et.al",
+      "track": "discussion",
+      "presenter": "TBD",
+      "filename": "llms_still_cant_plan.pdf",
+      "status": "upcoming",
+      "description": "Some planning benchmarks for LLMS",
+      "uploadedBy": "Dadams2",
+      "uploadedAt": "2025-06-27T07:21:13.786513"
     }
   ],
   "lastUpdated": "2025-06-27"
