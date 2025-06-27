@@ -135,11 +135,11 @@ class API {
     getGitHubToken() {
         console.log('🔍 Getting GitHub token...');
         
-        const loginData = JSON.parse(sessionStorage.getItem("auth:login"));
-        console.log('📦 Login data from sessionStorage:', loginData);
+        const loginData = JSON.parse(localStorage.getItem("auth:login"));
+        console.log('📦 Login data from localStorage:', loginData);
         
         if (!loginData || !loginData.user) {
-            console.warn('⚠️ No login data or user found in sessionStorage');
+            console.warn('⚠️ No login data or user found in localStorage');
             return null;
         }
         
