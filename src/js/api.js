@@ -204,7 +204,7 @@ class API {
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
             method: 'POST',
             headers: {
-                'Authorization': `token ${github_token}`,
+                'Authorization': `Bearer ${github_token}`,
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
