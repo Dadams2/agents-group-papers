@@ -1,6 +1,3 @@
-// Import auth functions
-import { isAuthenticated, currentUser, accessToken } from '/auth/api.js';
-
 // API for handling data operations
 class API {
     constructor() {
@@ -135,13 +132,35 @@ class API {
             .slice(0, limit);
     }
 
+    // Auth helper methods
+    isAuthenticated() {
+        const login = localStorage.getItem("auth:login");
+        return !!login;
+    }
+
+    currentUser() {
+        const login = localStorage.getItem("auth:login");
+        if (!login) {
+            return null;
+        }
+        return JSON.parse(login)["user"];
+    }
+
+    accessToken() {
+        const login = localStorage.getItem("auth:login");
+        if (!login) {
+            return null;
+        }
+        return JSON.parse(login)["access_token"];
+    }
+
     getGitHubToken() {
-        if (!isAuthenticated()) {
+        if (!this.isAuthenticated()) {
             console.log('User not authenticated');
             return null;
         }
 
-        const user = currentUser();
+        const user = this.currentUser();
         if (!user) {
             console.log('No user data found');
             return null;
@@ -180,16 +199,16 @@ class API {
 
         console.log('Trying to get fresh GitHub token via Auth0 Management API...');
         
-        if (!isAuthenticated()) {
+        if (!this.isAuthenticated()) {
             throw new Error('User not authenticated');
         }
 
-        const managementToken = accessToken();
+        const managementToken = this.accessToken();
         if (!managementToken) {
             throw new Error('No management token available');
         }
 
-        const user = currentUser();
+        const user = this.currentUser();
         if (!user || !user.user_id) {
             throw new Error('No user ID available');
         }
