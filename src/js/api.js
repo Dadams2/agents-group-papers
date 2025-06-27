@@ -229,13 +229,13 @@ class API {
             }
             
             // Test token validity and permissions
-            console.log('Testing GitHub token validity...');
-            const tokenValid = await this.testGitHubToken(github_token);
-            if (!tokenValid) {
-                throw new Error("Access token is invalid, expired, or lacks required permissions. Please log in again.");
-            }
+            // console.log('Testing GitHub token validity...');
+            // const tokenValid = await this.testGitHubToken(github_token);
+            // if (!tokenValid) {
+            //     throw new Error("Access token is invalid, expired, or lacks required permissions. Please log in again.");
+            // }
 
-            const owner = 'DAADAMS';
+            const owner = 'dadams2';
             const repo = 'agents-group-papers';
 
             console.log('Converting file to base64...');
