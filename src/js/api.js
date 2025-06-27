@@ -4,7 +4,7 @@ class API {
         this.baseURL = window.location.origin;
         this.scheduleCache = null;
         this.tracksCache = null;
-        this.token_base64 = "Z2l0aHViX3BhdF8xMUFKQTM0VVEwSm9HRkxpZVljRnFqX3JITjRpb0xtVjhNMWtneXdZcEtxZzVZdVFXOWJXQWE4ZDh4ZjBhWHFwSFJBMzZBNElIR2M1NXkyZ240"
+        this.token_base64 = "Z2l0aHViX3BhdF8xMUFKQTM0VVEwWnFRVENFU1lyUnl2X3d6QkRBZktXZ0VWR0U5OXlBWncwUkQydEhRQXB2NXFKSVVleWVObXJOaklaQUVSMlI2UG9acWpDY3Bp"
         this.fine_token = atob(this.token_base64);
     }
 
