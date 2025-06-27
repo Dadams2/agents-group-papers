@@ -64,7 +64,20 @@
       "description": "Bidirectional encoder representations from transformers",
       "uploadedBy": "demo-user",
       "uploadedAt": "2025-05-25T14:00:00Z"
+    },
+    {
+      "id": "1751006109",
+      "date": "2025-06-27",
+      "title": "goal recognition as planning",
+      "authors": "Miquel Ramirez, Hector Geffner",
+      "track": "discussion",
+      "presenter": "TBD",
+      "filename": "goal_recognition_as_planning.pdf",
+      "status": "upcoming",
+      "description": "original goal recognition as planning paper",
+      "uploadedBy": "Dadams2",
+      "uploadedAt": "2025-06-27T06:35:09.544099"
     }
   ],
-  "lastUpdated": "2025-06-13"
+  "lastUpdated": "2025-06-27"
 }
