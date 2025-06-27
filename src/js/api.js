@@ -160,96 +160,14 @@ class API {
             return null;
         }
 
-        const user = this.currentUser();
-        if (!user) {
-            console.log('No user data found');
+        const token = this.accessToken();
+        if (!token) {
+            console.log('No access token found');
             return null;
         }
 
-        console.log('Looking for GitHub token in user identities...');
-        
-        if (user.identities && user.identities.length > 0) {
-            const githubIdentity = user.identities.find(id => id.provider === 'github');
-            if (githubIdentity) {
-                console.log('Found GitHub identity:', githubIdentity);
-                
-                // Try different possible token fields
-                const token = githubIdentity.access_token || 
-                            githubIdentity.provider_access_token ||
-                            githubIdentity.oauth_token;
-                
-                if (token) {
-                    console.log('GitHub token found');
-                    return token;
-                }
-            }
-        }
-
-        console.log('GitHub token not found in user identities');
-        return null;
-    }
-
-    // Get GitHub token with fallback to Auth0 Management API
-    async getGitHubTokenWithFallback() {
-        // First try the simple method
-        const token = this.getGitHubToken();
-        if (token) {
-            return token;
-        }
-
-        console.log('Trying to get fresh GitHub token via Auth0 Management API...');
-        
-        if (!this.isAuthenticated()) {
-            throw new Error('User not authenticated');
-        }
-
-        const managementToken = this.accessToken();
-        if (!managementToken) {
-            throw new Error('No management token available');
-        }
-
-        const user = this.currentUser();
-        if (!user || !user.user_id) {
-            throw new Error('No user ID available');
-        }
-
-        try {
-            const domain = 'dev-7vzqlirhh8j4rx4c.au.auth0.com';
-            const response = await fetch(`https://${domain}/api/v2/users/${user.user_id}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${managementToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Management API request failed: ${response.status} ${response.statusText}`);
-            }
-
-            const userProfile = await response.json();
-            console.log('Fresh user profile retrieved');
-
-            // Look for GitHub identity token
-            if (userProfile.identities) {
-                const githubIdentity = userProfile.identities.find(id => id.provider === 'github');
-                if (githubIdentity) {
-                    const token = githubIdentity.access_token || 
-                                githubIdentity.provider_access_token ||
-                                githubIdentity.oauth_token;
-                    
-                    if (token) {
-                        console.log('GitHub token found via Management API');
-                        return token;
-                    }
-                }
-            }
-
-            throw new Error('GitHub token not found in fresh user profile');
-        } catch (error) {
-            console.error('Error getting GitHub token via Management API:', error);
-            throw error;
-        }
+        console.log('Using access token as GitHub token');
+        return token;
     }
 
     // Test GitHub token validity
@@ -304,19 +222,17 @@ class API {
         console.log('Starting paper upload process...');
         
         try {
-            // Try to get GitHub token, with fallback to Management API
-            let github_token = this.getGitHubToken();
-            
+            // Get GitHub token (which is the access token)
+            const github_token = this.getGitHubToken();
             if (!github_token) {
-                console.log('No GitHub token found locally, trying Management API...');
-                github_token = await this.getGitHubTokenWithFallback();
+                throw new Error("No access token found. Please log in again.");
             }
             
             // Test token validity and permissions
             console.log('Testing GitHub token validity...');
             const tokenValid = await this.testGitHubToken(github_token);
             if (!tokenValid) {
-                throw new Error("GitHub token is invalid, expired, or lacks required permissions. Please log in again.");
+                throw new Error("Access token is invalid, expired, or lacks required permissions. Please log in again.");
             }
 
             const owner = 'DAADAMS';
