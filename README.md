@@ -205,15 +205,10 @@ For questions or issues:
 2. Create a new issue with detailed description
 3. Contact the maintainers
 
-## Roadmap
 
-- [ ] Email notifications for upcoming papers
-- [ ] Integration with Slack/Discord
-- [ ] Paper discussion notes and comments
-- [ ] Reading progress tracking
-- [ ] Integration with reference managers (Zotero, Mendeley)
-- [ ] Advanced search with tags and categories
-- [ ] Mobile app for paper reading
+## Inspiration
+
+1. [gh-pages-auth](https://github.com/progrium/gh-pages-auth)
 
 ---
 
