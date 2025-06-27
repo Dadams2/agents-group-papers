@@ -132,40 +132,75 @@ class API {
             .slice(0, limit);
     }
 
-    // Upload paper (simulated)
+    getGitHubToken() {
+        const loginData = JSON.parse(localStorage.getItem("auth:login"));
+        if (!loginData || !loginData.user) {
+            return null;
+        }
+        const user = loginData.user;
+        if (user.identities && user.identities.length > 0) {
+            const githubIdentity = user.identities.find(id => id.provider === 'github');
+            if (githubIdentity && githubIdentity.access_token) {
+                return githubIdentity.access_token;
+            }
+        }
+        return null;
+    }
+
+    toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Upload paper
     async uploadPaper(paperData, file) {
+        const github_token = this.getGitHubToken();
+        if (!github_token) {
+            throw new Error("GitHub access token not found. Please log in again.");
+        }
 
-        // Simulate upload delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const owner = 'DAADAMS';
+        const repo = 'agents-group-papers';
 
-        // In production, this would:
-        // 1. Upload file to GitHub repository
-        // 2. Update schedule.json via GitHub API
-        // 3. Trigger GitHub Actions workflow
+        const fileContent = await this.toBase64(file);
 
-        console.log('Uploading paper:', paperData);
-        console.log('File:', file);
-
-        // Simulate successful upload
-        const newPaper = {
-            id: Date.now().toString(),
-            date: paperData.discussionDate || new Date().toISOString().split('T')[0],
+        const inputs = {
             title: paperData.title,
             authors: paperData.authors,
             track: paperData.track,
-            presenter: paperData.presenter || "TBD",
-            filename: file.name,
-            status: paperData.track === 'discussion' ? 'upcoming' : 'reference',
-            description: paperData.description || '',
-            uploadedAt: new Date().toISOString()
+            description: paperData.description,
+            discussion_date: paperData.discussionDate || '',
+            presenter: paperData.presenter || 'TBD',
+            file_content: fileContent,
+            filename: file.name
         };
 
-        // Add to cache
-        if (this.scheduleCache) {
-            this.scheduleCache.schedule.push(newPaper);
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${github_token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                ref: 'main',
+                inputs: inputs
+            })
+        });
+
+        if (response.status !== 204) {
+            const errorData = await response.json();
+            console.error('GitHub API Error:', errorData);
+            throw new Error(`GitHub API error: ${errorData.message}`);
         }
 
-        return newPaper;
+        // Invalidate cache so new data is fetched next time
+        this.clearCache();
+
+        return { success: true, message: "Paper upload started. It may take a moment to appear." };
     }
 
     // Add to schedule
