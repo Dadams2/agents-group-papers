@@ -30,10 +30,6 @@ on:
         description: 'Presenter name'
         required: false
         type: string
-      file_content:
-        description: 'Base64 encoded PDF content'
-        required: true
-        type: string
       filename:
         description: 'PDF filename'
         required: true
@@ -49,10 +45,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Decode and save PDF
-      run: |
-        echo "${{ github.event.inputs.file_content }}" | base64 -d > "papers/${{ github.event.inputs.track }}/${{ github.event.inputs.filename }}"
-        
     - name: Update schedule
       run: |
         python3 << 'EOF'

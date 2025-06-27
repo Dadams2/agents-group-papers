@@ -182,41 +182,68 @@ class API {
         const owner = 'Dadams2';
         const repo = 'agents-group-papers';
 
-        const fileContent = await this.toBase64(file);
+        try {
+            // Step 1: Upload the PDF file directly to GitHub
+            const fileContent = await this.toBase64(file);
+            const filePath = `papers/${paperData.track}/${file.name}`;
+            
+            const fileUploadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    message: `Add paper: ${paperData.title}`,
+                    content: fileContent,
+                    branch: 'main'
+                })
+            });
 
-        const inputs = {
-            title: paperData.title,
-            authors: paperData.authors,
-            track: paperData.track,
-            description: paperData.description,
-            discussion_date: paperData.discussionDate || '',
-            presenter: paperData.presenter || 'TBD',
-            file_content: fileContent,
-            filename: file.name
-        };
+            if (!fileUploadResponse.ok) {
+                const errorData = await fileUploadResponse.json();
+                throw new Error(`File upload failed: ${errorData.message}`);
+            }
 
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${github_token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            },
-            body: JSON.stringify({
-                ref: 'main',
-                inputs: inputs
-            })
-        });
+            // Step 2: Trigger workflow to update schedule (without file content)
+            const inputs = {
+                title: paperData.title,
+                authors: paperData.authors,
+                track: paperData.track,
+                description: paperData.description,
+                discussion_date: paperData.discussionDate || '',
+                presenter: paperData.presenter || 'TBD',
+                filename: file.name
+                // Note: file_content is removed since we uploaded directly
+            };
 
-        if (response.status !== 204) {
-            const errorData = await response.json();
-            console.error('GitHub API Error:', errorData);
-            throw new Error(`GitHub API error: ${errorData.message}`);
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    ref: 'main',
+                    inputs: inputs
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('GitHub API Error:', errorData);
+                throw new Error(`GitHub API error: ${errorData.message}`);
+            }
+
+            // Invalidate cache so new data is fetched next time
+            this.clearCache();
+
+            return { success: true, message: "Paper uploaded successfully!" };
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            throw error;
         }
-
-        // Invalidate cache so new data is fetched next time
-        this.clearCache();
-
-        return { success: true, message: "Paper upload started. It may take a moment to appear." };
     }
 
     // Add to schedule
