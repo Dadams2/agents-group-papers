@@ -192,7 +192,7 @@ class API {
             filename: file.name
         };
 
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper/dispatches`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${github_token}`,
