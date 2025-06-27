@@ -135,34 +135,25 @@ class API {
     getGitHubToken() {
         console.log('🔍 Getting GitHub token...');
         
-        const loginData = JSON.parse(localStorage.getItem("auth:login"));
-        console.log('📦 Login data from localStorage:', loginData);
+        const loginData = JSON.parse(sessionStorage.getItem("auth:login"));
+        console.log('📦 Login data from sessionStorage:', loginData);
         
         if (!loginData || !loginData.user) {
-            console.warn('⚠️ No login data or user found in localStorage');
+            console.warn('⚠️ No login data or user found in sessionStorage');
             return null;
         }
         
         const user = loginData.user;
         console.log('👤 User object:', user);
-        console.log('🔗 User identities:', user.identities);
+        console.log('🔗 User metadata:', user.user_metadata);
         
-        if (user.identities && user.identities.length > 0) {
-            console.log(`📋 Found ${user.identities.length} identities`);
-            
-            const githubIdentity = user.identities.find(id => id.provider === 'github');
-            console.log('🐙 GitHub identity:', githubIdentity);
-            
-            if (githubIdentity && githubIdentity.access_token) {
-                console.log('✅ GitHub access token found successfully');
-                console.log('🔑 Token preview:', githubIdentity.access_token.substring(0, 10) + '...');
-                return githubIdentity.access_token;
-            } else {
-                console.warn('⚠️ GitHub identity found but no access token available');
-                console.log('🔍 GitHub identity details:', githubIdentity);
-            }
+        if (user.user_metadata && user.user_metadata.gh_token) {
+            console.log('✅ GitHub token found in user_metadata');
+            console.log('🔑 Token preview:', user.user_metadata.gh_token.substring(0, 10) + '...');
+            return user.user_metadata.gh_token;
         } else {
-            console.warn('⚠️ No identities found in user object');
+            console.warn('⚠️ No gh_token found in user_metadata');
+            console.log('🔍 User metadata details:', user.user_metadata);
         }
         
         console.error('❌ Failed to retrieve GitHub token');
