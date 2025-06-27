@@ -179,7 +179,7 @@ class API {
         try {
             const response = await fetch('https://api.github.com/user', {
                 headers: {
-                    'Authorization': `token ${token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
@@ -256,7 +256,7 @@ class API {
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `token ${github_token}`,
+                    'Authorization': `Bearer ${github_token}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
