@@ -1,11 +1,12 @@
+const TOKEN_BASE64 = 'Z2l0aHViX3BhdF8xMUFKQTM0VVEwY2p1eWd2eW1qY25LX1Z4aDZYc1E0cXcydER4YWdZMHREUTNQT0FHN0F3NjF2dmVQNms5OHRTNVNDUUk0QUsyTU9YbWx1azRN';
+const TOKEN = atob(TOKEN_BASE64);
 // API for handling data operations
 class API {
     constructor() {
         this.baseURL = window.location.origin;
         this.scheduleCache = null;
         this.tracksCache = null;
-        this.token_base64 = "Z2l0aHViX3BhdF8xMUFKQTM0VVEwSm9HRkxpZVljRnFqX3JITjRpb0xtVjhNMWtneXdZcEtxZzVZdVFXOWJXQWE4ZDh4ZjBhWHFwSFJBMzZBNElIR2M1NXkyZ240"
-        this.fine_token = atob(this.token_base64);
+        this.fine_token = TOKEN;
     }
 
     // Schedule operations
