@@ -179,6 +179,28 @@ class API {
         const owner = 'Dadams2';
         const repo = 'agents-group-papers';
 
+        // First, check if we have access to the repository
+        try {
+            const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!repoResponse.ok) {
+                const repoError = await repoResponse.json();
+                console.error('Repository access error:', repoError);
+                throw new Error(`Cannot access repository: ${repoError.message}`);
+            }
+            
+            const repoData = await repoResponse.json();
+            console.log('Repository permissions:', repoData.permissions);
+        } catch (error) {
+            console.error('Error checking repository access:', error);
+            throw new Error(`Repository access check failed: ${error.message}`);
+        }
+
         const fileContent = await this.toBase64(file);
 
         const inputs = {
@@ -214,6 +236,147 @@ class API {
         this.clearCache();
 
         return { success: true, message: "Paper upload started. It may take a moment to appear." };
+   }
+
+    // Alternative upload method using direct file upload
+    async uploadPaperDirect(paperData, file) {
+        const github_token = this.getGitHubToken();
+        if (!github_token) {
+            throw new Error("GitHub access token not found. Please log in again.");
+        }
+
+        const owner = 'Dadams2';
+        const repo = 'agents-group-papers';
+        const branch = 'main';
+        
+        try {
+            const fileContent = await this.toBase64(file);
+            const path = `papers/${paperData.track}/${file.name}`;
+            
+            // Check if file already exists
+            let sha = null;
+            try {
+                const existingFileResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                    headers: {
+                        'Authorization': `Bearer ${github_token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (existingFileResponse.ok) {
+                    const existingFile = await existingFileResponse.json();
+                    sha = existingFile.sha;
+                }
+            } catch (error) {
+                // File doesn't exist, which is fine
+                console.log('File does not exist yet, will create new file');
+            }
+            
+            // Upload the file
+            const uploadData = {
+                message: `Add paper: ${paperData.title}`,
+                content: fileContent,
+                branch: branch
+            };
+            
+            if (sha) {
+                uploadData.sha = sha; // Required for updating existing files
+            }
+            
+            const uploadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(uploadData)
+            });
+            
+            if (!uploadResponse.ok) {
+                const uploadError = await uploadResponse.json();
+                console.error('File upload error:', uploadError);
+                throw new Error(`File upload failed: ${uploadError.message}`);
+            }
+            
+            // Now update the schedule
+            await this.updateScheduleFile(paperData, file, owner, repo, github_token);
+            
+            // Invalidate cache so new data is fetched next time
+            this.clearCache();
+            
+            return { success: true, message: "Paper uploaded successfully!" };
+            
+        } catch (error) {
+            console.error('Direct upload error:', error);
+            throw error;
+        }
+    }
+    
+    // Helper method to update schedule.json
+    async updateScheduleFile(paperData, file, owner, repo, github_token) {
+        const schedulePath = 'schedule/schedule.json';
+        
+        try {
+            // Get current schedule
+            const scheduleResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${schedulePath}`, {
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!scheduleResponse.ok) {
+                throw new Error('Could not fetch current schedule');
+            }
+            
+            const scheduleFile = await scheduleResponse.json();
+            const currentSchedule = JSON.parse(atob(scheduleFile.content));
+            
+            // Add new paper entry
+            const newEntry = {
+                id: `${Date.now()}`, // Simple ID generation
+                date: paperData.discussionDate || '',
+                title: paperData.title,
+                authors: paperData.authors,
+                track: paperData.track,
+                presenter: paperData.presenter || 'TBD',
+                filename: file.name,
+                status: paperData.discussionDate ? 'scheduled' : 'uploaded',
+                description: paperData.description || ''
+            };
+            
+            currentSchedule.schedule.push(newEntry);
+            currentSchedule.lastUpdated = new Date().toISOString().split('T')[0];
+            
+            // Update the schedule file
+            const updateScheduleData = {
+                message: `Update schedule: Add ${paperData.title}`,
+                content: btoa(JSON.stringify(currentSchedule, null, 2)),
+                sha: scheduleFile.sha,
+                branch: 'main'
+            };
+            
+            const updateResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${schedulePath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateScheduleData)
+            });
+            
+            if (!updateResponse.ok) {
+                const updateError = await updateResponse.json();
+                console.warn('Schedule update failed:', updateError);
+                // Don't throw error here - file upload was successful
+            }
+            
+        } catch (error) {
+            console.warn('Could not update schedule automatically:', error);
+            // Don't throw error - file upload was successful
+        }
     }
 
     // Add to schedule
@@ -266,6 +429,55 @@ class API {
     clearCache() {
         this.scheduleCache = null;
         this.tracksCache = null;
+    }
+
+    // Diagnostic method to check token permissions
+    async checkTokenPermissions() {
+        const github_token = this.getGitHubToken();
+        if (!github_token) {
+            console.error('No GitHub token available');
+            return;
+        }
+
+        try {
+            // Check user info and scopes
+            const userResponse = await fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `Bearer ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                console.log('GitHub user:', userData.login);
+                
+                // Check scopes from headers
+                const scopes = userResponse.headers.get('X-OAuth-Scopes');
+                console.log('Token scopes:', scopes);
+                
+                // Check specific repo access
+                const owner = 'Dadams2';
+                const repo = 'agents-group-papers';
+                const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+                    headers: {
+                        'Authorization': `Bearer ${github_token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (repoResponse.ok) {
+                    const repoData = await repoResponse.json();
+                    console.log('Repository permissions:', repoData.permissions);
+                } else {
+                    console.error('Cannot access repository');
+                }
+            } else {
+                console.error('Cannot verify user with token');
+            }
+        } catch (error) {
+            console.error('Error checking token permissions:', error);
+        }
     }
 
     // Utility methods
