@@ -204,6 +204,26 @@ class API {
 
         const fileContent = await this.toBase64(file);
 
+        const filePath = `papers/${paperData.track}/${file.name}`;
+        
+        const fileUploadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${github_token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                message: `Add paper: ${paperData.title}`,
+                content: fileContent,
+                branch: 'main'
+            })
+        });
+
+        if (!fileUploadResponse.ok) {
+            const errorData = await fileUploadResponse.json();
+            throw new Error(`File upload failed: ${errorData.message}`);
+        }
+
         const inputs = {
             title: paperData.title,
             authors: paperData.authors,
