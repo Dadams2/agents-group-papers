@@ -1,3 +1,6 @@
+// Import auth functions
+import { isAuthenticated, currentUser, accessToken } from '/auth/api.js';
+
 // API for handling data operations
 class API {
     constructor() {
@@ -133,18 +136,139 @@ class API {
     }
 
     getGitHubToken() {
-        const loginData = JSON.parse(localStorage.getItem("auth:login"));
-        if (!loginData || !loginData.user) {
+        if (!isAuthenticated()) {
+            console.log('User not authenticated');
             return null;
         }
-        const user = loginData.user;
+
+        const user = currentUser();
+        if (!user) {
+            console.log('No user data found');
+            return null;
+        }
+
+        console.log('Looking for GitHub token in user identities...');
+        
         if (user.identities && user.identities.length > 0) {
             const githubIdentity = user.identities.find(id => id.provider === 'github');
-            if (githubIdentity && githubIdentity.access_token) {
-                return githubIdentity.access_token;
+            if (githubIdentity) {
+                console.log('Found GitHub identity:', githubIdentity);
+                
+                // Try different possible token fields
+                const token = githubIdentity.access_token || 
+                            githubIdentity.provider_access_token ||
+                            githubIdentity.oauth_token;
+                
+                if (token) {
+                    console.log('GitHub token found');
+                    return token;
+                }
             }
         }
+
+        console.log('GitHub token not found in user identities');
         return null;
+    }
+
+    // Get GitHub token with fallback to Auth0 Management API
+    async getGitHubTokenWithFallback() {
+        // First try the simple method
+        const token = this.getGitHubToken();
+        if (token) {
+            return token;
+        }
+
+        console.log('Trying to get fresh GitHub token via Auth0 Management API...');
+        
+        if (!isAuthenticated()) {
+            throw new Error('User not authenticated');
+        }
+
+        const managementToken = accessToken();
+        if (!managementToken) {
+            throw new Error('No management token available');
+        }
+
+        const user = currentUser();
+        if (!user || !user.user_id) {
+            throw new Error('No user ID available');
+        }
+
+        try {
+            const domain = 'dev-7vzqlirhh8j4rx4c.au.auth0.com';
+            const response = await fetch(`https://${domain}/api/v2/users/${user.user_id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${managementToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Management API request failed: ${response.status} ${response.statusText}`);
+            }
+
+            const userProfile = await response.json();
+            console.log('Fresh user profile retrieved');
+
+            // Look for GitHub identity token
+            if (userProfile.identities) {
+                const githubIdentity = userProfile.identities.find(id => id.provider === 'github');
+                if (githubIdentity) {
+                    const token = githubIdentity.access_token || 
+                                githubIdentity.provider_access_token ||
+                                githubIdentity.oauth_token;
+                    
+                    if (token) {
+                        console.log('GitHub token found via Management API');
+                        return token;
+                    }
+                }
+            }
+
+            throw new Error('GitHub token not found in fresh user profile');
+        } catch (error) {
+            console.error('Error getting GitHub token via Management API:', error);
+            throw error;
+        }
+    }
+
+    // Test GitHub token validity
+    async testGitHubToken(token) {
+        if (!token) {
+            return false;
+        }
+
+        try {
+            const response = await fetch('https://api.github.com/user', {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (response.ok) {
+                const user = await response.json();
+                console.log('GitHub token is valid for user:', user.login);
+                
+                // Check token scopes
+                const scopes = response.headers.get('x-oauth-scopes');
+                console.log('GitHub token scopes:', scopes);
+                
+                if (!scopes || !scopes.includes('repo')) {
+                    console.warn('GitHub token may not have required "repo" scope');
+                    return false;
+                }
+                
+                return true;
+            } else {
+                console.error('GitHub token test failed:', response.status, response.statusText);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error testing GitHub token:', error);
+            return false;
+        }
     }
 
     toBase64(file) {
@@ -158,49 +282,80 @@ class API {
 
     // Upload paper
     async uploadPaper(paperData, file) {
-        const github_token = this.getGitHubToken();
-        if (!github_token) {
-            throw new Error("GitHub access token not found. Please log in again.");
+        console.log('Starting paper upload process...');
+        
+        try {
+            // Try to get GitHub token, with fallback to Management API
+            let github_token = this.getGitHubToken();
+            
+            if (!github_token) {
+                console.log('No GitHub token found locally, trying Management API...');
+                github_token = await this.getGitHubTokenWithFallback();
+            }
+            
+            // Test token validity and permissions
+            console.log('Testing GitHub token validity...');
+            const tokenValid = await this.testGitHubToken(github_token);
+            if (!tokenValid) {
+                throw new Error("GitHub token is invalid, expired, or lacks required permissions. Please log in again.");
+            }
+
+            const owner = 'DAADAMS';
+            const repo = 'agents-group-papers';
+
+            console.log('Converting file to base64...');
+            const fileContent = await this.toBase64(file);
+
+            const inputs = {
+                title: paperData.title,
+                authors: paperData.authors,
+                track: paperData.track,
+                description: paperData.description,
+                discussion_date: paperData.discussionDate || '',
+                presenter: paperData.presenter || 'TBD',
+                file_content: fileContent,
+                filename: file.name
+            };
+
+            console.log('Triggering GitHub workflow...');
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${github_token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ref: 'main',
+                    inputs: inputs
+                })
+            });
+
+            console.log('GitHub API response status:', response.status);
+
+            if (response.status !== 204) {
+                let errorMessage = `GitHub API error: ${response.status} ${response.statusText}`;
+                try {
+                    const errorData = await response.json();
+                    console.error('GitHub API Error Details:', errorData);
+                    errorMessage = `GitHub API error: ${errorData.message || errorMessage}`;
+                } catch (e) {
+                    console.error('Failed to parse error response');
+                }
+                throw new Error(errorMessage);
+            }
+
+            console.log('Paper upload workflow triggered successfully');
+
+            // Invalidate cache so new data is fetched next time
+            this.clearCache();
+
+            return { success: true, message: "Paper upload started. It may take a moment to appear." };
+            
+        } catch (error) {
+            console.error('Upload failed:', error);
+            throw error;
         }
-
-        const owner = 'DAADAMS';
-        const repo = 'agents-group-papers';
-
-        const fileContent = await this.toBase64(file);
-
-        const inputs = {
-            title: paperData.title,
-            authors: paperData.authors,
-            track: paperData.track,
-            description: paperData.description,
-            discussion_date: paperData.discussionDate || '',
-            presenter: paperData.presenter || 'TBD',
-            file_content: fileContent,
-            filename: file.name
-        };
-
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `token ${github_token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            },
-            body: JSON.stringify({
-                ref: 'main',
-                inputs: inputs
-            })
-        });
-
-        if (response.status !== 204) {
-            const errorData = await response.json();
-            console.error('GitHub API Error:', errorData);
-            throw new Error(`GitHub API error: ${errorData.message}`);
-        }
-
-        // Invalidate cache so new data is fetched next time
-        this.clearCache();
-
-        return { success: true, message: "Paper upload started. It may take a moment to appear." };
     }
 
     // Add to schedule
