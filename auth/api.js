@@ -5,7 +5,7 @@ export function login(redirect) {
   } else {
     localStorage.setItem("auth:redirect", window.location.href);
   }
-  window.location.href = window.location.href + "auth/";
+  window.location.href = "/agents-group-papers/auth/";
 }
 
 export function logout(redirect) {
@@ -14,7 +14,7 @@ export function logout(redirect) {
   } else {
     localStorage.setItem("auth:redirect", window.location.href);
   }
-  window.location.href = "/auth/?logout";
+  window.location.href = "/agents-group-papers/auth/?logout";
 }
 
 export function isAuthenticated() {
