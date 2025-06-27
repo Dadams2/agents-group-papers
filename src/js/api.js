@@ -176,7 +176,7 @@ class API {
             throw new Error("GitHub access token not found. Please log in again.");
         }
 
-        const owner = 'DAADAMS';
+        const owner = 'Dadams2';
         const repo = 'agents-group-papers';
 
         const fileContent = await this.toBase64(file);
@@ -192,7 +192,7 @@ class API {
             filename: file.name
         };
 
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper/dispatches`, {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${github_token}`,
