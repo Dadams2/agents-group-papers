@@ -30,9 +30,9 @@ window.onload = async () => {
   const authorizationParams = {
     redirect_uri: `${domain}`,
     audience: `https://${authSettings.domain}/api/v2/`,
-    scope: "read:current_user read:user_idp_tokens update:current_user_metadata openid profile repo",
+    scope: "read:current_user read:user_idp_tokens update:current_user_metadata",
     prompt: "login",
-    connection_scope: "repo",
+    // connection_scope: "repo",
   };
   const client = await auth0spa.createAuth0Client({authorizationParams, ...authSettings});  
   if (query.includes("code=") && query.includes("state=")) {
