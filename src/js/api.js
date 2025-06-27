@@ -132,152 +132,18 @@ class API {
             .slice(0, limit);
     }
 
-    async getGitHubToken() {
-        const loginData = localStorage.getItem("auth:login");
-        if (!loginData) {
-            console.log('No login data found');
+    getGitHubToken() {
+        const loginData = JSON.parse(localStorage.getItem("auth:login"));
+        if (!loginData || !loginData.user) {
             return null;
         }
-        
-        const authData = JSON.parse(loginData);
-        const user = authData.user;
-        
-        if (!user) {
-            console.log('No user data found');
-            return null;
-        }
-
-        console.log('Attempting to retrieve GitHub token...');
-
-        // Method 1: Check if GitHub token is directly available in identities
+        const user = loginData.user;
         if (user.identities && user.identities.length > 0) {
             const githubIdentity = user.identities.find(id => id.provider === 'github');
-            if (githubIdentity) {
-                console.log('Found GitHub identity:', githubIdentity);
-                // Try different token fields
-                if (githubIdentity.access_token) {
-                    console.log('Found GitHub token in access_token field');
-                    return githubIdentity.access_token;
-                }
-                if (githubIdentity.provider_access_token) {
-                    console.log('Found GitHub token in provider_access_token field');
-                    return githubIdentity.provider_access_token;
-                }
+            if (githubIdentity && githubIdentity.access_token) {
+                return githubIdentity.access_token;
             }
         }
-
-        // Method 2: Try to get it from Auth0 Management API
-        try {
-            const managementToken = authData.access_token;
-            if (!managementToken) {
-                console.log('No management token available');
-                return await this.getGitHubTokenAlternative();
-            }
-
-            const domain = 'dev-7vzqlirhh8j4rx4c.au.auth0.com';
-            console.log('Fetching fresh user profile from Auth0...');
-            
-            const response = await fetch(`https://${domain}/api/v2/users/${user.user_id}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${managementToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                console.error('Failed to fetch user profile from Auth0:', response.status, response.statusText);
-                return await this.getGitHubTokenAlternative();
-            }
-
-            const userProfile = await response.json();
-            console.log('Fresh user profile:', userProfile);
-            
-            // Look for GitHub identity in the fresh user profile
-            if (userProfile.identities) {
-                const githubIdentity = userProfile.identities.find(id => id.provider === 'github');
-                if (githubIdentity) {
-                    if (githubIdentity.access_token) {
-                        console.log('Found GitHub token in fresh profile access_token');
-                        return githubIdentity.access_token;
-                    }
-                    if (githubIdentity.provider_access_token) {
-                        console.log('Found GitHub token in fresh profile provider_access_token');
-                        return githubIdentity.provider_access_token;
-                    }
-                }
-            }
-
-            console.log('GitHub token not found in fresh user profile');
-            return await this.getGitHubTokenAlternative();
-        } catch (error) {
-            console.error('Error fetching GitHub token from Management API:', error);
-            return await this.getGitHubTokenAlternative();
-        }
-    }
-
-    // Debug method to check what's stored in localStorage
-    debugAuthData() {
-        const loginData = localStorage.getItem("auth:login");
-        if (loginData) {
-            console.log('Auth data:', JSON.parse(loginData));
-        } else {
-            console.log('No auth data found');
-        }
-    }
-
-    // Alternative method to get GitHub token from Auth0
-    async getGitHubTokenAlternative() {
-        const loginData = localStorage.getItem("auth:login");
-        if (!loginData) {
-            console.log('No login data found');
-            return null;
-        }
-        
-        const authData = JSON.parse(loginData);
-        const user = authData.user;
-        
-        if (!user) {
-            console.log('No user data found');
-            return null;
-        }
-
-        console.log('User data structure:', user);
-
-        // Try different possible locations for the GitHub token
-        const possiblePaths = [
-            // Standard identity structure
-            () => {
-                if (user.identities) {
-                    const githubIdentity = user.identities.find(id => id.provider === 'github');
-                    return githubIdentity?.access_token;
-                }
-                return null;
-            },
-            // Direct access token
-            () => user.access_token,
-            // Auth0 user metadata
-            () => user.user_metadata?.github_token,
-            () => user.app_metadata?.github_token,
-            // Social connections
-            () => {
-                if (user.identities) {
-                    const githubIdentity = user.identities.find(id => id.provider === 'github');
-                    return githubIdentity?.provider_access_token;
-                }
-                return null;
-            }
-        ];
-
-        for (const getToken of possiblePaths) {
-            const token = getToken();
-            if (token) {
-                console.log('Found GitHub token via alternative method');
-                return token;
-            }
-        }
-
-        console.log('No GitHub token found in any expected location');
         return null;
     }
 
@@ -292,30 +158,14 @@ class API {
 
     // Upload paper
     async uploadPaper(paperData, file) {
-        console.log('Starting paper upload process...');
-        
-        const github_token = await this.getGitHubToken();
+        const github_token = this.getGitHubToken();
         if (!github_token) {
-            throw new Error("GitHub access token not found. Please log in again and ensure GitHub integration is properly configured.");
-        }
-
-        console.log('GitHub token retrieved, testing validity...');
-        const tokenValid = await this.testGitHubToken(github_token);
-        if (!tokenValid) {
-            throw new Error("GitHub token is invalid or expired. Please log in again.");
-        }
-
-        const scopes = await this.checkGitHubTokenPermissions(github_token);
-        console.log('Token scopes:', scopes);
-        
-        if (!scopes || !scopes.includes('repo')) {
-            console.warn('GitHub token may not have required repo permissions');
+            throw new Error("GitHub access token not found. Please log in again.");
         }
 
         const owner = 'DAADAMS';
         const repo = 'agents-group-papers';
 
-        console.log('Converting file to base64...');
         const fileContent = await this.toBase64(file);
 
         const inputs = {
@@ -329,13 +179,11 @@ class API {
             filename: file.name
         };
 
-        console.log('Triggering GitHub workflow...');
         const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/upload-paper.yml/dispatches`, {
             method: 'POST',
             headers: {
                 'Authorization': `token ${github_token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
+                'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
                 ref: 'main',
@@ -343,21 +191,11 @@ class API {
             })
         });
 
-        console.log('GitHub API response status:', response.status);
-
         if (response.status !== 204) {
-            let errorMessage = `GitHub API error: ${response.status} ${response.statusText}`;
-            try {
-                const errorData = await response.json();
-                console.error('GitHub API Error Details:', errorData);
-                errorMessage = `GitHub API error: ${errorData.message || errorMessage}`;
-            } catch (e) {
-                console.error('Failed to parse error response');
-            }
-            throw new Error(errorMessage);
+            const errorData = await response.json();
+            console.error('GitHub API Error:', errorData);
+            throw new Error(`GitHub API error: ${errorData.message}`);
         }
-
-        console.log('Paper upload workflow triggered successfully');
 
         // Invalidate cache so new data is fetched next time
         this.clearCache();
@@ -451,64 +289,6 @@ class API {
         const branch = 'main'; // change to 'master' if needed
 
         return `https://github.com/${githubUser}/${repoName}/blob/${branch}/papers/${track}/${filename}`;
-    }
-
-    // Test method to verify GitHub token works
-    async testGitHubToken(token) {
-        if (!token) {
-            console.log('No token provided for testing');
-            return false;
-        }
-
-        try {
-            const response = await fetch('https://api.github.com/user', {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-
-            if (response.ok) {
-                const user = await response.json();
-                console.log('GitHub token is valid for user:', user.login);
-                return true;
-            } else {
-                console.error('GitHub token test failed:', response.status, response.statusText);
-                return false;
-            }
-        } catch (error) {
-            console.error('Error testing GitHub token:', error);
-            return false;
-        }
-    }
-
-    // Method to check token permissions
-    async checkGitHubTokenPermissions(token) {
-        if (!token) {
-            console.log('No token provided for permission check');
-            return null;
-        }
-
-        try {
-            const response = await fetch('https://api.github.com/user', {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-
-            if (response.ok) {
-                const scopes = response.headers.get('x-oauth-scopes');
-                console.log('GitHub token scopes:', scopes);
-                return scopes;
-            } else {
-                console.error('Failed to check GitHub token permissions:', response.status);
-                return null;
-            }
-        } catch (error) {
-            console.error('Error checking GitHub token permissions:', error);
-            return null;
-        }
     }
 }
 
