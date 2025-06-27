@@ -231,7 +231,6 @@ class API {
             description: paperData.description,
             discussion_date: paperData.discussionDate || '',
             presenter: paperData.presenter || 'TBD',
-            file_content: fileContent,
             filename: file.name
         };
 
