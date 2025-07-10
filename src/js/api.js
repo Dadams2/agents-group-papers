@@ -260,14 +260,45 @@ class API {
 
     // Add to schedule
     async addToSchedule(paperId, date, presenter) {
+        const github_token = this.getGitHubToken();
+        if (!github_token) {
+            throw new Error("GitHub access token not found. Please log in first.");
+        }
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const owner = 'Dadams2';
+        const repo = 'agents-group-papers';
 
         console.log('Adding to schedule:', { paperId, date, presenter });
-        
-        // In production, this would update the schedule via GitHub API
-        return true;
+
+        const inputs = {
+            paper_id: paperId,
+            discussion_date: date,
+            presenter: presenter || 'TBD',
+            action: 'add_to_schedule'
+        };
+
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/update-schedule.yml/dispatches`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${github_token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                ref: 'main',
+                inputs: inputs
+            })
+        });
+
+        if (response.status !== 204) {
+            const errorData = await response.json();
+            console.error('GitHub API Error:', errorData);
+            throw new Error(`GitHub API error: ${errorData.message}`);
+        }
+
+        // Invalidate cache so new data is fetched next time
+        this.clearCache();
+
+        return { success: true, message: "Paper added to schedule. It may take a moment to appear." };
     }
 
     // Search papers
