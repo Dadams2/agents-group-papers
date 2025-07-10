@@ -226,19 +226,46 @@ function escapeHtml(text) {
 // Action handlers
 async function addToDiscussion(paperId) {
     const paper = currentPapers.find(p => p.id === paperId);
-    if (!paper) return;
+    if (!paper) {
+        alert('Paper not found!');
+        return;
+    }
 
-    const date = prompt('Enter discussion date (YYYY-MM-DD):');
+    // Create a more user-friendly date input
+    const today = new Date().toISOString().split('T')[0];
+    const date = prompt(`Enter discussion date for "${paper.title}" (YYYY-MM-DD):`, today);
     if (!date) return;
 
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+        alert('Please enter a valid date in YYYY-MM-DD format');
+        return;
+    }
+
+    // Check if date is not in the past
+    if (date < today) {
+        if (!confirm('The selected date is in the past. Are you sure you want to schedule this?')) {
+            return;
+        }
+    }
+
+    const presenter = prompt('Enter presenter name (optional):') || 'TBD';
+
     try {
-        await window.api.addToSchedule(paperId, date, 'TBD');
-        alert('Paper added to discussion schedule!');
+        const result = await window.api.addToSchedule(paperId, date, presenter);
         
-        // Refresh papers
-        loadPapers();
+        if (result.success) {
+            alert(`✅ ${result.message}\n\nPaper: ${paper.title}\nDate: ${date}\nPresenter: ${presenter}`);
+            
+            // Refresh papers to show updated status
+            loadPapers();
+        } else {
+            alert('Failed to add paper to schedule. Please try again.');
+        }
     } catch (error) {
-        alert('Error scheduling discussion: ' + error.message);
+        console.error('Error scheduling discussion:', error);
+        alert(`❌ Error scheduling discussion: ${error.message}`);
     }
 }
 

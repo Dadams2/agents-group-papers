@@ -279,16 +279,38 @@ function createCalendarDay(date, currentMonth) {
 async function openAddModal() {
     const modal = document.getElementById('add-schedule-modal');
     const paperSelect = document.getElementById('schedule-paper');
+    const dateInput = document.getElementById('schedule-date');
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+    
+    // Clear any existing status messages
+    hideScheduleStatus();
+    
+    // Show loading state while fetching papers
+    showScheduleStatus('Loading papers...', 'loading');
     
     // Load available papers
     try {
         const papers = await window.api.getPapersByTrack('reference');
-        paperSelect.innerHTML = '<option value="">Select a paper...</option>' +
-            papers.map(paper => 
-                `<option value="${paper.id}">${paper.title} - ${paper.authors}</option>`
-            ).join('');
+        
+        if (papers.length === 0) {
+            showScheduleStatus('No reference papers available to schedule', 'error');
+            paperSelect.innerHTML = '<option value="">No papers available</option>';
+        } else {
+            paperSelect.innerHTML = '<option value="">Select a paper...</option>' +
+                papers.map(paper => 
+                    `<option value="${paper.id}">${paper.title} - ${paper.authors}</option>`
+                ).join('');
+            
+            // Hide loading status
+            hideScheduleStatus();
+        }
     } catch (error) {
         console.error('Error loading papers:', error);
+        showScheduleStatus('Failed to load papers. Please try again.', 'error');
+        paperSelect.innerHTML = '<option value="">Error loading papers</option>';
     }
     
     modal.classList.remove('hidden');
@@ -301,6 +323,15 @@ function closeModal() {
     // Reset form
     const form = document.getElementById('add-schedule-form');
     form.reset();
+    
+    // Clear any status messages
+    hideScheduleStatus();
+    
+    // Clear any error messages
+    const errorDiv = modal.querySelector('.schedule-error');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
 }
 
 async function handleAddToSchedule(e) {
@@ -311,25 +342,83 @@ async function handleAddToSchedule(e) {
     const date = formData.get('date');
     const presenter = formData.get('presenter');
     
+    // Validate form
+    if (!paperId || !date) {
+        showScheduleError('Please select a paper and date');
+        return;
+    }
+
+    // Show loading state
+    showScheduleStatus('Adding to schedule...', 'loading');
+
     try {
-        await window.api.addToSchedule(paperId, date, presenter);
-        alert('Successfully added to schedule!');
-        closeModal();
-        loadSchedule();
+        const result = await window.api.addToSchedule(paperId, date, presenter);
+        
+        if (result.success) {
+            showScheduleStatus('Successfully added to schedule!', 'success');
+            
+            // Show success message on page
+            showScheduleMessage(`Paper added to schedule for ${date}${presenter ? ' with presenter ' + presenter : ''}`, 'success');
+            
+            // Close modal and refresh after successful addition
+            setTimeout(() => {
+                closeModal();
+                loadSchedule();
+            }, 1500);
+        } else {
+            showScheduleStatus('Failed to add to schedule', 'error');
+        }
+
     } catch (error) {
-        alert('Error adding to schedule: ' + error.message);
+        console.error('Schedule error:', error);
+        showScheduleStatus('Error adding to schedule: ' + error.message, 'error');
     }
 }
 
 function showEventDetails(event) {
-    const details = `
-        Title: ${event.title}
-        Authors: ${event.authors}
-        Date: ${window.api.formatDate(event.date)}
-        Presenter: ${event.presenter || 'TBD'}
-        ${event.description ? `\nDescription: ${event.description}` : ''}
+    // Create a modal or detailed view instead of alert
+    const modal = document.getElementById('add-schedule-modal');
+    const existingDetailsModal = document.getElementById('event-details-modal');
+    
+    if (existingDetailsModal) {
+        existingDetailsModal.remove();
+    }
+    
+    const detailsModal = document.createElement('div');
+    detailsModal.id = 'event-details-modal';
+    detailsModal.className = 'modal';
+    detailsModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Event Details</h3>
+                <button class="modal-close" onclick="closeEventDetails()">&times;</button>
+            </div>
+            <div class="event-details">
+                <h4>${escapeHtml(event.title)}</h4>
+                <p><strong>Authors:</strong> ${escapeHtml(event.authors)}</p>
+                <p><strong>Date:</strong> ${window.api.formatDate(event.date)}</p>
+                <p><strong>Presenter:</strong> ${escapeHtml(event.presenter || 'TBD')}</p>
+                ${event.description ? `<p><strong>Description:</strong> ${escapeHtml(event.description)}</p>` : ''}
+                <div class="modal-actions">
+                    <a href="${window.api.generatePaperUrl(event.track, event.filename)}" 
+                       class="btn btn-primary" target="_blank">
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
+                    <button onclick="closeEventDetails()" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
     `;
-    alert(details);
+    
+    document.body.appendChild(detailsModal);
+    detailsModal.classList.remove('hidden');
+}
+
+function closeEventDetails() {
+    const modal = document.getElementById('event-details-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 function exportToCalendar(itemId) {
@@ -393,20 +482,26 @@ function escapeHtml(text) {
 }
 
 function showError(message) {
+    // Show error message on page instead of replacing schedule content
+    showScheduleMessage(message, 'error');
+    
+    // Also show a retry button in the schedule area if it's empty
     const container = document.getElementById('schedule-list');
-    container.innerHTML = `
-        <div class="error">
-            <i class="fas fa-exclamation-triangle"></i>
-            <p>${message}</p>
-            <button onclick="loadSchedule()" class="btn btn-primary">Retry</button>
-        </div>
-    `;
+    if (container && currentSchedule.length === 0) {
+        container.innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${message}</p>
+                <button onclick="loadSchedule()" class="btn btn-primary">Retry</button>
+            </div>
+        `;
+    }
 }
 
 // Export schedule functionality
 document.getElementById('export-schedule')?.addEventListener('click', function() {
     if (currentSchedule.length === 0) {
-        alert('No schedule items to export');
+        showScheduleMessage('No schedule items to export', 'error');
         return;
     }
     
@@ -418,6 +513,8 @@ document.getElementById('export-schedule')?.addEventListener('click', function()
     a.download = 'reading-group-schedule.ics';
     a.click();
     URL.revokeObjectURL(url);
+    
+    showScheduleMessage('Schedule exported successfully!', 'success');
 });
 
 function generateFullICalendar() {
@@ -449,4 +546,163 @@ function generateFullICalendar() {
         ...events,
         'END:VCALENDAR'
     ].join('\r\n');
+}
+
+function showScheduleStatus(message, type) {
+    const modal = document.getElementById('add-schedule-modal');
+    let statusDiv = modal.querySelector('.schedule-status');
+    
+    if (!statusDiv) {
+        statusDiv = document.createElement('div');
+        statusDiv.className = 'schedule-status';
+        statusDiv.innerHTML = `
+            <i class="fas fa-spinner"></i>
+            <span></span>
+        `;
+        statusDiv.style.cssText = `
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        `;
+        
+        const form = modal.querySelector('#add-schedule-form');
+        form.parentNode.insertBefore(statusDiv, form);
+    }
+    
+    const messageSpan = statusDiv.querySelector('span');
+    const icon = statusDiv.querySelector('i');
+    
+    statusDiv.classList.remove('hidden');
+    messageSpan.textContent = message;
+    
+    // Update icon based on type
+    icon.className = 'fas ' + getScheduleStatusIcon(type);
+    
+    // Update styling based on type
+    if (type === 'loading') {
+        statusDiv.style.backgroundColor = '#eff6ff';
+        statusDiv.style.color = '#1d4ed8';
+        statusDiv.style.border = '1px solid #bfdbfe';
+    } else if (type === 'success') {
+        statusDiv.style.backgroundColor = '#f0fdf4';
+        statusDiv.style.color = '#15803d';
+        statusDiv.style.border = '1px solid #bbf7d0';
+    } else if (type === 'error') {
+        statusDiv.style.backgroundColor = '#fef2f2';
+        statusDiv.style.color = '#dc2626';
+        statusDiv.style.border = '1px solid #fecaca';
+    }
+}
+
+function hideScheduleStatus() {
+    const modal = document.getElementById('add-schedule-modal');
+    const statusDiv = modal.querySelector('.schedule-status');
+    if (statusDiv) {
+        statusDiv.classList.add('hidden');
+    }
+}
+
+function getScheduleStatusIcon(type) {
+    const icons = {
+        loading: 'fa-spinner fa-spin',
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle'
+    };
+    return icons[type] || 'fa-info-circle';
+}
+
+function showScheduleError(message) {
+    const modal = document.getElementById('add-schedule-modal');
+    let errorDiv = modal.querySelector('.schedule-error');
+    
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'schedule-error';
+        errorDiv.style.cssText = `
+            background-color: #fef2f2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #fecaca;
+        `;
+        
+        const form = modal.querySelector('#add-schedule-form');
+        form.parentNode.insertBefore(errorDiv, form);
+    }
+    
+    errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${message}</span>
+    `;
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 5000);
+}
+
+function showScheduleMessage(message, type) {
+    // Create or update message container
+    let messageContainer = document.getElementById('schedule-message');
+    
+    if (!messageContainer) {
+        messageContainer = document.createElement('div');
+        messageContainer.id = 'schedule-message';
+        messageContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            word-wrap: break-word;
+        `;
+        
+        document.body.appendChild(messageContainer);
+    }
+    
+    // Update styling based on type
+    if (type === 'success') {
+        messageContainer.style.backgroundColor = '#f0fdf4';
+        messageContainer.style.color = '#15803d';
+        messageContainer.style.border = '1px solid #bbf7d0';
+        messageContainer.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <span>${message}</span>
+        `;
+    } else if (type === 'error') {
+        messageContainer.style.backgroundColor = '#fef2f2';
+        messageContainer.style.color = '#dc2626';
+        messageContainer.style.border = '1px solid #fecaca';
+        messageContainer.innerHTML = `
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${message}</span>
+        `;
+    } else if (type === 'info') {
+        messageContainer.style.backgroundColor = '#eff6ff';
+        messageContainer.style.color = '#1d4ed8';
+        messageContainer.style.border = '1px solid #bfdbfe';
+        messageContainer.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            <span>${message}</span>
+        `;
+    }
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (messageContainer && messageContainer.parentNode) {
+            messageContainer.remove();
+        }
+    }, 5000);
 }
