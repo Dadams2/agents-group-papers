@@ -90,7 +90,20 @@
       "description": "Some planning benchmarks for LLMS",
       "uploadedBy": "Dadams2",
       "uploadedAt": "2025-06-27T07:21:13.786513"
+    },
+    {
+      "id": "1752123781",
+      "date": "2025-07-18",
+      "title": "Classical Planning with LLM-Generated Heuristics: Challenging the State of the Art with Python Code",
+      "authors": "AB Corr\u00eaa, AG Pereira, J Seipp",
+      "track": "discussion",
+      "presenter": "TBD",
+      "filename": "2503.18809v1.pdf",
+      "status": "upcoming",
+      "description": "A surprising result where LLM programmed heuristics yield better results than state-of-the-art domain inderpendent heuristics in satisficing planning",
+      "uploadedBy": "Dadams2",
+      "uploadedAt": "2025-07-10T05:03:01.373930"
     }
   ],
-  "lastUpdated": "2025-06-27"
+  "lastUpdated": "2025-07-10"
 }
