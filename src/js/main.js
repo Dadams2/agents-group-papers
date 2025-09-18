@@ -163,9 +163,9 @@ function createPaperCard(paper) {
     const daysUntil = window.api.getDaysUntil(paper.date);
     const isUpcoming = paper.track === 'discussion' && daysUntil >= 0;
     
-    // Like functionality
-    const likeCount = window.api.getLikeCount(paper);
-    const hasLiked = window.api.hasUserLiked(paper);
+    // Like functionality - with fallback for when API functions aren't available yet
+    const likeCount = (window.api && window.api.getLikeCount) ? window.api.getLikeCount(paper) : (paper.likes ? paper.likes.count : 0);
+    const hasLiked = (window.api && window.api.hasUserLiked) ? window.api.hasUserLiked(paper) : false;
     const likeIcon = hasLiked ? 'fas fa-heart' : 'far fa-heart';
     const likeButtonClass = hasLiked ? 'btn-like liked' : 'btn-like';
     
@@ -232,6 +232,12 @@ function getTrackName(track) {
 async function toggleLike(paperId) {
     if (!window.auth || !window.auth.isAuthenticated()) {
         alert('Please log in to like papers');
+        return;
+    }
+
+    // Check if like functions are available
+    if (!window.api || !window.api.likePaper || !window.api.hasUserLiked) {
+        alert('Like functionality is not available yet. Please refresh the page.');
         return;
     }
 

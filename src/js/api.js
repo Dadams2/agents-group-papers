@@ -463,3 +463,10 @@ class API {
 
 // Global API instance
 window.api = new API();
+
+// Debug: Log that API functions are available
+console.log('API initialized with like functions:', {
+    hasLikeCount: typeof window.api.getLikeCount === 'function',
+    hasUserLiked: typeof window.api.hasUserLiked === 'function',
+    likePaper: typeof window.api.likePaper === 'function'
+});
