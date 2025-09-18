@@ -1,0 +1,101 @@
+name: Update Paper Likes
+
+on:
+  workflow_dispatch:
+    inputs:
+      paper_id:
+        description: 'Paper ID to update likes for'
+        required: true
+        type: string
+      username:
+        description: 'Username performing the action'
+        required: true
+        type: string
+      action:
+        description: 'Action to perform (like or unlike)'
+        required: true
+        type: choice
+        options:
+        - like
+        - unlike
+
+permissions:
+  contents: write
+
+jobs:
+  update-likes:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Update likes in schedule
+      run: |
+        python3 << 'EOF'
+        import json
+        import os
+        from datetime import datetime
+        
+        # Load current schedule
+        with open('schedule/schedule.json', 'r') as f:
+            schedule_data = json.load(f)
+        
+        paper_id = "${{ github.event.inputs.paper_id }}"
+        username = "${{ github.event.inputs.username }}"
+        action = "${{ github.event.inputs.action }}"
+        
+        # Find the paper to update
+        paper_found = False
+        for paper in schedule_data['schedule']:
+            if paper['id'] == paper_id:
+                paper_found = True
+                
+                # Initialize likes structure if it doesn't exist
+                if 'likes' not in paper:
+                    paper['likes'] = {
+                        'count': 0,
+                        'users': []
+                    }
+                
+                # Perform the action
+                if action == 'like':
+                    # Add like if user hasn't already liked
+                    if username not in paper['likes']['users']:
+                        paper['likes']['users'].append(username)
+                        paper['likes']['count'] = len(paper['likes']['users'])
+                        print(f"✅ Added like from {username} to paper {paper_id}")
+                    else:
+                        print(f"ℹ️ {username} already liked paper {paper_id}")
+                        
+                elif action == 'unlike':
+                    # Remove like if user has liked
+                    if username in paper['likes']['users']:
+                        paper['likes']['users'].remove(username)
+                        paper['likes']['count'] = len(paper['likes']['users'])
+                        print(f"✅ Removed like from {username} from paper {paper_id}")
+                    else:
+                        print(f"ℹ️ {username} hasn't liked paper {paper_id}")
+                
+                break
+        
+        if not paper_found:
+            print(f"❌ Paper with ID {paper_id} not found")
+            exit(1)
+        
+        # Update last modified timestamp
+        schedule_data['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # Save updated schedule
+        with open('schedule/schedule.json', 'w') as f:
+            json.dump(schedule_data, f, indent=2)
+            
+        print(f"✅ Successfully updated likes for paper {paper_id}")
+        EOF
+        
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add schedule/schedule.json
+        git commit -m "Update likes for paper ${{ github.event.inputs.paper_id }} by ${{ github.event.inputs.username }}" || exit 0
+        git push

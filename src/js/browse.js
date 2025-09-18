@@ -144,6 +144,12 @@ function createPaperCard(paper) {
     const isUpcoming = paper.track === 'discussion' && daysUntil >= 0;
     const formattedDate = window.api.formatDate(paper.date);
     
+    // Like functionality
+    const likeCount = window.api.getLikeCount(paper);
+    const hasLiked = window.api.hasUserLiked(paper);
+    const likeIcon = hasLiked ? 'fas fa-heart' : 'far fa-heart';
+    const likeButtonClass = hasLiked ? 'btn-like liked' : 'btn-like';
+    
     return `
         <div class="paper-item" data-paper-id="${paper.id}">
             <div class="paper-header">
@@ -151,9 +157,17 @@ function createPaperCard(paper) {
                     <h3 class="paper-title">${escapeHtml(paper.title)}</h3>
                     <p class="paper-authors">by ${escapeHtml(paper.authors)}</p>
                 </div>
-                <span class="paper-track track-${paper.track}">
-                    ${getTrackIcon(paper.track)} ${getTrackName(paper.track)}
-                </span>
+                <div class="paper-header-right">
+                    <span class="paper-track track-${paper.track}">
+                        ${getTrackIcon(paper.track)} ${getTrackName(paper.track)}
+                    </span>
+                    <div class="paper-likes">
+                        <button onclick="toggleLike('${paper.id}')" class="${likeButtonClass}" title="${hasLiked ? 'Unlike' : 'Like'} this paper">
+                            <i class="${likeIcon}"></i>
+                        </button>
+                        <span class="like-count">${likeCount}</span>
+                    </div>
+                </div>
             </div>
             
             <div class="paper-meta">
@@ -294,6 +308,92 @@ function sharePaper(paperId) {
 function editPaper(paperId) {
     // This would open an edit modal or redirect to edit page
     alert('Edit functionality coming soon!');
+}
+
+// Like/Unlike functionality
+async function toggleLike(paperId) {
+    if (!window.auth || !window.auth.isAuthenticated()) {
+        alert('Please log in to like papers');
+        return;
+    }
+
+    try {
+        const paper = currentPapers.find(p => p.id === paperId);
+        if (!paper) {
+            throw new Error('Paper not found');
+        }
+
+        const hasLiked = window.api.hasUserLiked(paper);
+        const action = hasLiked ? 'unlike' : 'like';
+        
+        // Show loading state
+        const button = document.querySelector(`[data-paper-id="${paperId}"] .btn-like`);
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+
+        // Perform the action
+        if (action === 'like') {
+            await window.api.likePaper(paperId);
+        } else {
+            await window.api.unlikePaper(paperId);
+        }
+
+        // Show success message
+        showLikeMessage(`Paper ${action}d successfully! Changes will appear shortly.`, 'success');
+        
+        // Reload papers after a short delay to show updated counts
+        setTimeout(async () => {
+            await loadPapers();
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error toggling like:', error);
+        showLikeMessage('Failed to update like: ' + error.message, 'error');
+        
+        // Reset button state
+        const button = document.querySelector(`[data-paper-id="${paperId}"] .btn-like`);
+        if (button) {
+            button.disabled = false;
+        }
+    }
+}
+
+function showLikeMessage(message, type) {
+    // Create or update message element
+    let messageDiv = document.querySelector('.like-message');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.className = 'like-message';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            z-index: 1000;
+            font-weight: 500;
+            max-width: 300px;
+        `;
+        document.body.appendChild(messageDiv);
+    }
+
+    // Style based on type
+    if (type === 'success') {
+        messageDiv.style.backgroundColor = '#10b981';
+        messageDiv.style.color = 'white';
+    } else {
+        messageDiv.style.backgroundColor = '#ef4444';
+        messageDiv.style.color = 'white';
+    }
+
+    messageDiv.textContent = message;
+    messageDiv.style.display = 'block';
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 3000);
 }
 
 // Handle direct paper links

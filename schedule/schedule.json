@@ -11,7 +11,11 @@
       "status": "upcoming",
       "description": "Foundational paper on the Transformer architecture that revolutionized NLP",
       "uploadedBy": "demo-user",
-      "uploadedAt": "2025-06-13T10:00:00Z"
+      "uploadedAt": "2025-06-13T10:00:00Z",
+      "likes": {
+        "count": 1,
+        "users": ["David"]
+      }
     },
     {
       "id": "2025-06-27",
@@ -24,7 +28,11 @@
       "status": "upcoming",
       "description": "Technical details of GPT-4 architecture and capabilities",
       "uploadedBy": "demo-user",
-      "uploadedAt": "2025-06-13T11:00:00Z"
+      "uploadedAt": "2025-06-13T11:00:00Z",
+      "likes": {
+        "count": 5,
+        "users": ["demo-user", "alice", "bob", "charlie", "diana"]
+      }
     },
     {
       "id": "2025-07-04",

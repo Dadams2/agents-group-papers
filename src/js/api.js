@@ -376,6 +376,89 @@ class API {
 
         return `https://github.com/${githubUser}/${repoName}/blob/${branch}/papers/${track}/${filename}`;
     }
+
+    // Like/unlike paper functionality
+    async likePaper(paperId) {
+        const github_token = this.getGitHubToken();
+        if (!github_token) {
+            throw new Error('GitHub token required to like papers');
+        }
+
+        // Get current user info
+        const loginData = JSON.parse(localStorage.getItem("auth:login"));
+        if (!loginData || !loginData.user) {
+            throw new Error('User must be logged in to like papers');
+        }
+
+        const username = loginData.user.nickname || loginData.user.email || 'anonymous';
+        
+        return await this.updatePaperLikes(paperId, username, 'like');
+    }
+
+    async unlikePaper(paperId) {
+        const github_token = this.getGitHubToken();
+        if (!github_token) {
+            throw new Error('GitHub token required to unlike papers');
+        }
+
+        // Get current user info
+        const loginData = JSON.parse(localStorage.getItem("auth:login"));
+        if (!loginData || !loginData.user) {
+            throw new Error('User must be logged in to unlike papers');
+        }
+
+        const username = loginData.user.nickname || loginData.user.email || 'anonymous';
+        
+        return await this.updatePaperLikes(paperId, username, 'unlike');
+    }
+
+    async updatePaperLikes(paperId, username, action) {
+        const github_token = this.getGitHubToken();
+        const owner = 'Dadams2';
+        const repo = 'agents-group-papers';
+
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/update-likes.yml/dispatches`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${github_token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                ref: 'main',
+                inputs: {
+                    paper_id: paperId,
+                    username: username,
+                    action: action
+                }
+            })
+        });
+
+        if (response.status !== 204) {
+            const errorData = await response.text();
+            throw new Error(`Failed to ${action} paper: ${errorData}`);
+        }
+
+        // Invalidate cache so updated likes are fetched next time
+        this.clearCache();
+
+        return { success: true, message: `Paper ${action}d successfully!` };
+    }
+
+    // Check if current user has liked a paper
+    hasUserLiked(paper) {
+        const loginData = JSON.parse(localStorage.getItem("auth:login"));
+        if (!loginData || !loginData.user || !paper.likes) {
+            return false;
+        }
+
+        const username = loginData.user.nickname || loginData.user.email || 'anonymous';
+        return paper.likes.users && paper.likes.users.includes(username);
+    }
+
+    // Get like count for a paper
+    getLikeCount(paper) {
+        return paper.likes ? paper.likes.count : 0;
+    }
 }
 
 // Global API instance
