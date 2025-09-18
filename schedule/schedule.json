@@ -14,7 +14,9 @@
       "uploadedAt": "2025-06-13T10:00:00Z",
       "likes": {
         "count": 1,
-        "users": ["David"]
+        "users": [
+          "David"
+        ]
       }
     },
     {
@@ -31,7 +33,13 @@
       "uploadedAt": "2025-06-13T11:00:00Z",
       "likes": {
         "count": 5,
-        "users": ["demo-user", "alice", "bob", "charlie", "diana"]
+        "users": [
+          "demo-user",
+          "alice",
+          "bob",
+          "charlie",
+          "diana"
+        ]
       }
     },
     {
@@ -110,8 +118,14 @@
       "status": "upcoming",
       "description": "A surprising result where LLM programmed heuristics yield better results than state-of-the-art domain inderpendent heuristics in satisficing planning",
       "uploadedBy": "Dadams2",
-      "uploadedAt": "2025-07-10T05:03:01.373930"
+      "uploadedAt": "2025-07-10T05:03:01.373930",
+      "likes": {
+        "count": 1,
+        "users": [
+          "Dadams2"
+        ]
+      }
     }
   ],
-  "lastUpdated": "2025-07-10"
+  "lastUpdated": "2025-09-18"
 }
