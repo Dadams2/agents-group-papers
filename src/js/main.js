@@ -230,8 +230,9 @@ function getTrackName(track) {
 
 // Like/Unlike functionality (shared with browse.js)
 async function toggleLike(paperId) {
-    if (!window.auth || !window.auth.isAuthenticated()) {
-        alert('Please log in to like papers');
+    // Check authentication using the proper auth API
+    if (!window.auth || typeof window.auth.isAuthenticated !== 'function' || !window.auth.isAuthenticated()) {
+        alert('Please log in with GitHub to like papers');
         return;
     }
 
