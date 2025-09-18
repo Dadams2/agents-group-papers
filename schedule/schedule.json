@@ -13,9 +13,10 @@
       "uploadedBy": "demo-user",
       "uploadedAt": "2025-06-13T10:00:00Z",
       "likes": {
-        "count": 1,
+        "count": 2,
         "users": [
-          "David"
+          "David",
+          "Dadams2"
         ]
       }
     },
